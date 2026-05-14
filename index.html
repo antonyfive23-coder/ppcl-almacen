@@ -1,0 +1,4299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaControl Pro — PPCL Legionella · Almacén Antequera</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Firebase — cargador dinámico con múltiples CDN de respaldo -->
+<script>
+(function(){
+  // Lista de CDNs para Firebase SDK (se prueban en orden)
+  var FB_VER = '10.12.2';
+  var CDNS = [
+    'https://www.gstatic.com/firebasejs/'+FB_VER+'/',
+    'https://cdn.jsdelivr.net/npm/firebase@'+FB_VER+'/compat/',
+    'https://unpkg.com/firebase@'+FB_VER+'/compat/'
+  ];
+  var LIBS = ['firebase-app-compat.js','firebase-database-compat.js'];
+
+  window.__fbLoadAttempt = 0;
+
+  function tryLoadFrom(cdnIndex){
+    if(cdnIndex >= CDNS.length){
+      window.__fbLoadFailed = true;
+      console.error('[Firebase] Todos los CDNs fallaron. Abre desde GitHub Pages.');
+      return;
+    }
+    var base = CDNS[cdnIndex];
+    var loaded = 0;
+
+    function loadScript(src, cb){
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload  = cb;
+      s.onerror = function(){ tryLoadFrom(cdnIndex + 1); };
+      document.head.appendChild(s);
+    }
+
+    // Cargar app primero, luego database
+    loadScript(base + LIBS[0], function(){
+      loadScript(base + LIBS[1], function(){
+        window.__fbLoadFailed = false;
+        if(typeof window.__fbOnReady === 'function') window.__fbOnReady();
+      });
+    });
+  }
+
+  tryLoadFrom(0);
+})();
+</script>
+<style>
+:root {
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#f7f8fa;--surface3:#eef0f4;
+  --border:#d8dce6;--border2:#c4c9d8;
+  --navy:#0f1f3d;--navy2:#1a2f52;--navy3:#243d6b;
+  --blue:#1d6fa4;--blue2:#2589c7;--blue-light:#e8f3fb;
+  --teal:#0d8a7a;--teal-light:#e4f5f3;
+  --amber:#c97b00;--amber-light:#fff7e6;
+  --red:#c0392b;--red-light:#fdf0ee;
+  --green:#1a7a4a;--green-light:#e8f7ef;
+  --text:#1a2035;--text2:#424c6a;--text3:#6b7494;--text4:#9ba3bc;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:sans-serif,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surface3);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ─── LOGIN ─── */
+#loginScreen{
+  position:fixed;inset:0;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;flex-direction:column;gap:20px;
+}
+#loginScreen.hidden{display:none;}
+.login-card{
+  background:var(--surface);border-radius:16px;padding:36px 32px;
+  width:340px;max-width:92vw;text-align:center;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+}
+.login-logo{font-size:40px;margin-bottom:12px;}
+.login-title{font-family:Sora,sans-serif;font-size:18px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.login-sub{font-family:monospace,monospace;font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:24px;}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px;}
+.pin-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--border2);background:transparent;
+  transition:background 0.2s,border-color 0.2s;
+}
+.pin-dot.filled{background:var(--blue2);border-color:var(--blue2);}
+.pin-dot.error{background:var(--red);border-color:var(--red);}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.pin-btn{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:16px;font-family:Sora,sans-serif;
+  font-size:20px;font-weight:700;color:var(--navy);cursor:pointer;
+  transition:all 0.12s;user-select:none;
+}
+.pin-btn:hover{background:var(--blue-light);border-color:var(--blue2);}
+.pin-btn:active{transform:scale(0.93);}
+.pin-btn.wide{grid-column:span 2;}
+.pin-error{color:var(--red);font-family:monospace,monospace;font-size:11px;min-height:18px;}
+.login-hint{font-family:monospace,monospace;font-size:10px;color:var(--text4);margin-top:12px;}
+
+/* ─── HEADER ─── */
+.app-header{
+  background:var(--navy);
+  padding:0 24px;
+  height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,0.25);
+}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.hdr-logo{
+  width:36px;height:36px;background:var(--blue2);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.hdr-titles{}
+.hdr-title{font-family:Sora,sans-serif;font-size:15px;font-weight:700;color:#fff;letter-spacing:0.3px;}
+.hdr-sub{font-family:monospace,monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:1px;margin-top:1px;}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.hdr-year{
+  font-family:monospace,monospace;font-size:11px;font-weight:500;
+  color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.08);
+  padding:4px 10px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);
+}
+.hdr-btn{
+  background:var(--blue2);color:#fff;border:none;
+  padding:7px 14px;border-radius:6px;cursor:pointer;
+  font-family:sans-serif,sans-serif;font-size:12px;font-weight:600;
+  transition:all 0.15s;display:flex;align-items:center;gap:6px;
+}
+.hdr-btn:hover{background:#2a9ad8;transform:translateY(-1px);}
+.hdr-btn.save{background:var(--teal);}
+.hdr-btn.save:hover{background:#0fa894;}
+.hdr-btn.email{background:#7c3aed;}
+.hdr-btn.email:hover{background:#6d28d9;}
+.saved-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes saveFlash{
+  0%  {background:var(--teal);transform:scale(1);box-shadow:none;}
+  20% {background:#22c55e;transform:scale(1.1);box-shadow:0 0 0 5px rgba(34,197,94,0.4);}
+  55% {background:#16a34a;transform:scale(1.05);box-shadow:0 0 0 10px rgba(34,197,94,0.1);}
+  100%{background:var(--teal);transform:scale(1);box-shadow:none;}
+}
+.hdr-btn.save.flashing{animation:saveFlash 0.75s ease forwards!important;}
+/* Indicador sync en header */
+.sync-indicator{
+  display:flex;align-items:center;gap:5px;
+  font-family:monospace;font-size:10px;
+  color:rgba(255,255,255,0.5);
+  padding:3px 8px;border-radius:4px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05);
+  transition:all 0.4s;white-space:nowrap;max-width:160px;overflow:hidden;
+}
+.sync-indicator.ok{color:#4ade80;border-color:rgba(74,222,128,0.35);background:rgba(74,222,128,0.1);}
+.sync-indicator.error{color:#f87171;border-color:rgba(248,113,113,0.35);background:rgba(248,113,113,0.1);}
+.sync-indicator.pending{color:#fbbf24;border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.1);}
+.sync-dot-hdr{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sync-indicator.ok .sync-dot-hdr{animation:pulse 1.5s infinite;}
+
+/* ─── TABS ─── */
+.tab-nav{
+  background:var(--navy2);
+  padding:0 24px;
+  display:flex;gap:2px;
+  border-bottom:2px solid rgba(255,255,255,0.07);
+}
+.tab-btn{
+  padding:11px 20px;
+  font-family:Sora,sans-serif;font-size:12px;font-weight:600;
+  color:rgba(255,255,255,0.45);letter-spacing:0.3px;
+  cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:all 0.15s;white-space:nowrap;
+}
+.tab-btn:hover{color:rgba(255,255,255,0.75);}
+.tab-btn.active{color:#fff;border-bottom-color:var(--blue2);}
+
+/* ─── MAIN LAYOUT ─── */
+.main{padding:20px 24px;max-width:1400px;margin:0 auto;}
+
+/* ─── DATE BAR ─── */
+.date-bar{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:14px 20px;margin-bottom:18px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.date-bar-label{font-family:monospace,monospace;font-size:10px;font-weight:500;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
+.date-input{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:6px 12px;border-radius:6px;
+  font-family:monospace,monospace;font-size:13px;outline:none;
+  transition:border-color 0.15s;cursor:pointer;
+}
+.date-input:focus{border-color:var(--blue2);}
+.date-nav{display:flex;gap:6px;align-items:center;}
+.date-nav-btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text2);
+  width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:all 0.15s;
+}
+.date-nav-btn:hover{background:var(--blue-light);border-color:var(--blue2);color:var(--blue);}
+.date-display{
+  font-family:Sora,sans-serif;font-size:14px;font-weight:600;color:var(--navy);
+  padding:6px 14px;background:var(--blue-light);border-radius:6px;
+  border:1px solid rgba(29,111,164,0.2);
+}
+.date-today-btn{
+  font-family:sans-serif,sans-serif;font-size:11px;font-weight:600;
+  background:none;border:1px solid var(--border);color:var(--text3);
+  padding:5px 10px;border-radius:5px;cursor:pointer;transition:all 0.15s;
+}
+.date-today-btn:hover{border-color:var(--blue2);color:var(--blue);}
+
+/* ─── TAB CONTENT ─── */
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* ─── SECTION CARD ─── */
+.section-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;margin-bottom:16px;overflow:hidden;
+}
+.section-head{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 18px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);cursor:pointer;
+  transition:background 0.12s;
+}
+.section-head:hover{background:var(--surface3);}
+.sec-icon{
+  width:32px;height:32px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.sec-icon.blue{background:var(--blue-light);}
+.sec-icon.teal{background:var(--teal-light);}
+.sec-icon.amber{background:var(--amber-light);}
+.sec-icon.red{background:var(--red-light);}
+.sec-title{font-family:Sora,sans-serif;font-size:13px;font-weight:700;color:var(--navy);letter-spacing:0.2px;}
+.sec-sub{font-family:monospace,monospace;font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:0.5px;}
+.sec-badge{
+  margin-left:auto;font-family:monospace,monospace;font-size:10px;font-weight:500;
+  padding:3px 9px;border-radius:20px;
+}
+.badge-blue{background:var(--blue-light);color:var(--blue);}
+.badge-teal{background:var(--teal-light);color:var(--teal);}
+.badge-amber{background:var(--amber-light);color:var(--amber);}
+.sec-toggle{color:var(--text4);font-size:12px;transition:transform 0.25s;margin-left:8px;}
+.section-card.collapsed .sec-toggle{transform:rotate(-90deg);}
+.section-body{overflow:hidden;transition:max-height 0.3s ease;}
+.section-card.collapsed .section-body{max-height:0!important;}
+
+/* ─── DATA TABLE ─── */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{
+  font-family:monospace,monospace;font-size:10px;font-weight:500;
+  color:var(--text3);letter-spacing:1px;text-transform:uppercase;
+  padding:9px 14px;background:var(--surface2);
+  border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;
+}
+.data-table th.center{text-align:center;}
+.data-table td{
+  padding:8px 14px;border-bottom:1px solid var(--border);
+  font-size:13px;vertical-align:middle;
+}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(29,111,164,0.04);}
+.data-table tr.week-start td{border-top:2px solid var(--blue2);}
+.data-table tr.week-start td:first-child{border-left:3px solid var(--blue2);}
+
+/* row types */
+.row-nint{font-family:monospace,monospace;font-size:11px;color:var(--text3);}
+.row-loc{font-size:12px;font-weight:500;color:var(--text);}
+.row-day{font-family:monospace,monospace;font-size:12px;font-weight:500;color:var(--navy);}
+.row-sep{font-family:Sora,sans-serif;font-size:11px;font-weight:700;color:var(--blue);
+  background:var(--blue-light)!important;letter-spacing:0.5px;}
+.sep-dot{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--blue2);vertical-align:middle;margin-right:4px;
+}
+.sep-label{ vertical-align:middle; }
+.sep-date-wrap{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-left:12px;vertical-align:middle;
+  background:rgba(255,255,255,0.7);
+  border:1.5px dashed var(--blue2);
+  border-radius:6px;padding:2px 8px;
+  cursor:pointer;transition:background 0.15s;
+}
+.sep-date-wrap:hover{ background:#fff;border-style:solid; }
+.sep-date-input{
+  border:none;outline:none;background:transparent;
+  font-family:monospace,monospace;font-size:11px;font-weight:600;
+  color:var(--navy);cursor:pointer;
+  /* Hide the field itself — we show only the label */
+  position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;
+}
+.sep-date-input::-webkit-calendar-picker-indicator{ display:none!important; }
+.sep-date-label{
+  font-family:Sora,sans-serif;font-size:11px;font-weight:700;
+  color:var(--blue);white-space:nowrap;cursor:pointer;
+  text-decoration:underline dotted var(--blue2);
+}
+.sep-edit-btn{
+  background:var(--blue2);color:#fff;border:none;
+  width:22px;height:22px;border-radius:4px;cursor:pointer;
+  font-size:11px;display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background 0.15s;
+  vertical-align:middle;
+}
+.sep-edit-btn:hover{ background:#2a9ad8; }
+/* Sync indicator */
+.sync-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;background:var(--teal-light);
+  border-bottom:1px solid rgba(13,138,122,0.2);
+  font-family:monospace,monospace;font-size:11px;color:var(--teal);
+}
+.sync-bar.warn{ background:var(--amber-light);color:var(--amber);border-color:rgba(201,123,0,0.2); }
+.sync-dot{ width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;flex-shrink:0; }
+
+/* ─── INPUT CELLS ─── */
+.cell-input{
+  width:100%;border:none;outline:none;background:transparent;
+  font-family:monospace,monospace;font-size:12px;color:var(--text);
+  padding:3px 6px;border-radius:4px;text-align:center;
+  transition:background 0.12s,border 0.12s;min-width:0;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  box-sizing:border-box;
+}
+.cell-input:focus{background:var(--blue-light);outline:2px solid rgba(29,111,164,0.35);}
+.cell-input:not(:placeholder-shown){background:var(--green-light);color:var(--green);}
+.cell-input.ok{background:var(--green-light)!important;color:var(--green)!important;}
+.cell-input.warn{background:var(--amber-light)!important;color:var(--amber)!important;}
+.cell-input.bad{background:var(--red-light)!important;color:var(--red)!important;}
+
+select.cell-input{cursor:pointer;}
+
+/* ─── WEEK LABEL ─── */
+.week-label{
+  display:inline-block;font-family:monospace,monospace;font-size:9px;font-weight:500;
+  padding:2px 7px;border-radius:3px;letter-spacing:1px;text-transform:uppercase;
+  background:var(--blue-light);color:var(--blue);
+}
+
+/* ─── STATS ROW ─── */
+.stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;border-top:3px solid transparent;
+}
+.stat-card.blue{border-top-color:var(--blue2);}
+.stat-card.teal{border-top-color:var(--teal);}
+.stat-card.amber{border-top-color:var(--amber);}
+.stat-card.green{border-top-color:var(--green);}
+.stat-num{font-family:Sora,sans-serif;font-size:28px;font-weight:800;color:var(--navy);}
+.stat-label{font-family:monospace,monospace;font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:0.5px;}
+
+/* ─── CONDENSADOR GRID ─── */
+.cond-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-left:1px solid var(--border);}
+.cond-col{border-right:1px solid var(--border);}
+.cond-header{
+  background:var(--navy);color:#fff;
+  font-family:Sora,sans-serif;font-size:11px;font-weight:700;
+  padding:10px 16px;text-align:center;letter-spacing:0.5px;
+}
+.cond-subheader{
+  display:grid;grid-template-columns:48px 1fr 1fr 1fr 1fr;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+}
+.cond-sh{
+  font-family:monospace,monospace;font-size:9px;font-weight:500;
+  color:var(--text3);letter-spacing:1px;text-transform:uppercase;
+  padding:7px 10px;text-align:center;border-right:1px solid var(--border);
+}
+.cond-row{
+  display:grid;grid-template-columns:48px 1fr 1fr 1fr 1fr;
+  border-bottom:1px solid var(--border);transition:background 0.1s;
+}
+.cond-row:last-child{border-bottom:none;}
+.cond-row:hover{background:rgba(29,111,164,0.03);}
+.cond-day{
+  font-family:monospace,monospace;font-size:12px;font-weight:600;color:var(--navy);
+  padding:7px 10px;text-align:center;border-right:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;background:var(--surface2);
+}
+.cond-cell{padding:3px 4px;border-right:1px solid var(--border);overflow:hidden;}
+.cond-cell:last-child{border-right:none;}
+/* Asegurar que los inputs dentro de celdas no desborden ni bloqueen el tap */
+.cond-cell .cell-input{min-width:0;width:100%;font-size:11px;padding:4px 2px;touch-action:manipulation;}
+
+
+/* ─── MONTH SELECTOR ─── */
+.month-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.month-pill{
+  padding:5px 14px;border-radius:20px;font-family:monospace,monospace;font-size:11px;
+  font-weight:500;cursor:pointer;border:1px solid var(--border);
+  color:var(--text3);background:var(--surface);transition:all 0.15s;
+}
+.month-pill:hover{border-color:var(--blue2);color:var(--blue);}
+.month-pill.active{background:var(--blue2);color:#fff;border-color:var(--blue2);}
+
+/* ─── MODAL ─── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,0.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:12px;padding:24px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+.modal-title{font-family:Sora,sans-serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.form-group{margin-bottom:13px;}
+.form-label{display:block;font-family:monospace,monospace;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+.form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;font-family:sans-serif,sans-serif;font-size:13px;outline:none;transition:border-color 0.15s;}
+.form-input:focus,.form-select:focus{border-color:var(--blue2);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.btn{padding:8px 18px;border:none;border-radius:7px;cursor:pointer;font-family:Sora,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.3px;transition:all 0.15s;}
+.btn-primary{background:var(--blue2);color:#fff;}
+.btn-primary:hover{background:#2a9ad8;}
+.btn-outline{background:transparent;color:var(--text3);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--text2);color:var(--text);}
+
+/* ─── TOAST ─── */
+/* ── EMAIL MODAL ── */
+.email-modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(10,15,30,0.72);z-index:300;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.email-modal-overlay.open{display:flex;}
+.email-modal{
+  background:#fff;border-radius:14px;
+  width:480px;max-width:96vw;
+  box-shadow:0 24px 80px rgba(0,0,0,0.3);
+  overflow:hidden;
+}
+.email-modal-header{
+  background:var(--navy);padding:18px 22px;
+  display:flex;align-items:center;gap:12px;
+}
+.email-modal-header-icon{font-size:22px;}
+.email-modal-header-text{flex:1;}
+.email-modal-header-title{
+  font-family:Sora,sans-serif;font-size:15px;
+  font-weight:800;color:#fff;letter-spacing:0.3px;
+}
+.email-modal-header-sub{
+  font-family:monospace,monospace;font-size:10px;
+  color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:1px;
+}
+.email-modal-close{
+  background:rgba(255,255,255,0.1);border:none;color:#fff;
+  width:28px;height:28px;border-radius:50%;cursor:pointer;
+  font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:background 0.15s;
+}
+.email-modal-close:hover{background:rgba(255,255,255,0.2);}
+.email-modal-body{padding:22px;}
+.email-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:18px;}
+.email-step{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;padding:12px 14px;
+}
+.email-step.active{
+  background:var(--blue-light);border-color:rgba(37,137,199,0.35);
+}
+.email-step.done{
+  background:var(--green-light)!important;border-color:rgba(26,122,74,0.3)!important;
+}
+.step-num{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--navy);color:#fff;
+  font-family:Sora,sans-serif;font-size:12px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.email-step.active .step-num{background:var(--blue2);}
+.email-step.done .step-num{background:var(--green);}
+.step-content{}
+.step-title{font-family:Sora,sans-serif;font-size:13px;font-weight:700;color:var(--navy);}
+.step-desc{font-size:12px;color:var(--text3);margin-top:3px;line-height:1.5;}
+.step-badge{
+  display:inline-block;font-family:monospace,monospace;font-size:10px;font-weight:600;
+  padding:2px 8px;border-radius:4px;margin-top:5px;
+  background:var(--navy);color:#fff;letter-spacing:0.5px;
+}
+.email-info-box{
+  background:var(--amber-light);border:1px solid rgba(201,123,0,0.25);
+  border-radius:8px;padding:11px 14px;margin-bottom:16px;
+  font-size:12px;color:var(--amber);line-height:1.5;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.email-modal-actions{display:flex;gap:10px;}
+.email-btn{
+  flex:1;padding:11px;border:none;border-radius:8px;cursor:pointer;
+  font-family:Sora,sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:0.3px;transition:all 0.15s;
+}
+.email-btn.primary{background:var(--navy);color:#fff;}
+.email-btn.primary:hover{background:var(--navy2);}
+.email-btn.secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.email-btn.secondary:hover{border-color:var(--text3);}
+.email-btn.excel{background:#1D6F42;color:#fff;}
+.email-btn.excel:hover{background:#165a35;}
+.email-filename{
+  font-family:monospace,monospace;font-size:11px;
+  background:var(--surface3);border:1px solid var(--border);
+  border-radius:5px;padding:6px 10px;margin-top:8px;color:var(--text2);
+  word-break:break-all;
+}
+.email-progress{
+  height:4px;background:var(--border);border-radius:2px;margin-top:14px;overflow:hidden;
+}
+.email-progress-bar{
+  height:100%;background:linear-gradient(90deg,var(--blue2),var(--teal));
+  border-radius:2px;width:0%;transition:width 0.5s ease;
+}
+
+/* ── MODAL FECHA SEPARADOR ─── */
+.date-picker-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(10,15,30,0.6);z-index:500;
+  align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(2px);
+}
+.date-picker-overlay.open{display:flex;}
+.date-picker-modal{
+  background:#fff;border-radius:16px 16px 0 0;
+  width:100%;max-width:480px;padding:20px;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+}
+.date-picker-title{
+  font-family:Sora,sans-serif;font-size:14px;font-weight:800;
+  color:var(--navy);margin-bottom:16px;text-align:center;
+  letter-spacing:0.3px;
+}
+.date-picker-inputs{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;
+}
+.date-picker-col label{
+  display:block;font-family:monospace;font-size:9px;color:var(--text3);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;text-align:center;
+}
+.date-picker-select{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--navy);padding:10px 6px;border-radius:8px;
+  font-family:monospace;font-size:14px;font-weight:600;text-align:center;
+  outline:none;cursor:pointer;transition:border-color 0.15s;
+  -webkit-appearance:none;appearance:none;
+}
+.date-picker-select:focus{border-color:var(--blue2);}
+.date-picker-preview{
+  text-align:center;font-family:Sora,sans-serif;font-size:13px;
+  font-weight:600;color:var(--blue);margin-bottom:16px;
+  padding:8px;background:var(--blue-light);border-radius:6px;
+}
+.date-picker-actions{display:flex;gap:10px;}
+.date-picker-btn{
+  flex:1;padding:12px;border:none;border-radius:8px;cursor:pointer;
+  font-family:Sora,sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:0.3px;transition:all 0.15s;
+}
+.date-picker-btn.confirm{background:var(--blue2);color:#fff;}
+.date-picker-btn.confirm:hover{background:#2a9ad8;}
+.date-picker-btn.cancel{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:11px 18px;border-radius:8px;font-family:monospace,monospace;font-size:12px;transform:translateX(130%);transition:transform 0.3s ease;z-index:400;border-left:4px solid var(--teal);box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+.toast.show{transform:translateX(0);}
+
+/* ─── DASHBOARD KPI ─── */
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  position:relative;overflow:hidden;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+}
+.kpi-card.blue::before{background:var(--blue2);}
+.kpi-card.teal::before{background:var(--teal);}
+.kpi-card.green::before{background:var(--green);}
+.kpi-card.amber::before{background:var(--amber);}
+.kpi-card.red::before{background:var(--red);}
+.kpi-num{
+  font-family:Sora,sans-serif;font-size:32px;font-weight:800;
+  line-height:1;color:var(--navy);
+}
+.kpi-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:500;}
+.kpi-icon{position:absolute;right:12px;top:12px;font-size:22px;opacity:0.12;}
+.kpi-trend{
+  font-family:monospace;font-size:10px;margin-top:6px;
+  display:inline-block;padding:2px 7px;border-radius:4px;
+}
+.kpi-trend.up{background:var(--green-light);color:var(--green);}
+.kpi-trend.down{background:var(--red-light);color:var(--red);}
+.kpi-trend.ok{background:var(--blue-light);color:var(--blue);}
+
+/* Alertas */
+.alert-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 12px;border-radius:6px;margin-bottom:8px;
+  border:1px solid transparent;
+}
+.alert-item.red{background:var(--red-light);border-color:rgba(231,76,60,0.2);}
+.alert-item.amber{background:var(--amber-light);border-color:rgba(201,123,0,0.2);}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-text{font-size:12px;color:var(--text);line-height:1.5;}
+.alert-meta{font-family:monospace;font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* ─── MOBILE RESPONSIVE MEJORADO ─── */
+/* CONFIG MOBILE */
+.cfg-section{margin-bottom:12px;}
+.cfg-row{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:8px;margin-bottom:6px;
+}
+.cfg-row-num{
+  font-family:monospace;font-size:11px;color:var(--text3);
+  min-width:28px;text-align:center;flex-shrink:0;
+}
+.cfg-row-input{
+  flex:1;background:transparent;border:none;outline:none;
+  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);
+  padding:0;
+}
+.cfg-row-input::placeholder{color:var(--text4);}
+.cfg-row-actions{display:flex;gap:6px;flex-shrink:0;}
+.cfg-icon-btn{
+  background:none;border:1px solid var(--border2);color:var(--text3);
+  width:32px;height:32px;border-radius:6px;cursor:pointer;
+  font-size:14px;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;flex-shrink:0;
+}
+.cfg-icon-btn:hover{border-color:var(--blue2);color:var(--blue2);}
+.cfg-icon-btn.del:hover{border-color:var(--red);color:var(--red);}
+.cfg-add-btn{
+  width:100%;padding:10px;border:2px dashed var(--border2);
+  background:none;border-radius:8px;color:var(--text3);cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:4px;
+}
+.cfg-add-btn:hover{border-color:var(--blue2);color:var(--blue2);background:var(--blue-light);}
+.cfg-group-hdr{
+  font-family:monospace;font-size:10px;color:var(--text3);
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:6px 12px;margin-bottom:6px;
+}
+.sync-status{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  border-radius:6px;font-family:monospace;font-size:11px;margin-bottom:12px;
+}
+.sync-status.ok{background:var(--green-light);color:var(--green);}
+.sync-status.error{background:var(--red-light);color:var(--red);}
+.sync-status.pending{background:var(--amber-light);color:var(--amber);}
+
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .tab-nav{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 8px;scrollbar-width:none;}
+  .tab-nav::-webkit-scrollbar{display:none;}
+  .tab-btn{padding:10px 12px;font-size:11px;white-space:nowrap;}
+  .main{display:flex;flex-direction:column;}
+  .tab-content{padding:12px;}
+  .page-hdr{flex-direction:column;gap:8px;align-items:flex-start;margin-bottom:14px;}
+  .page-title{font-size:24px;}
+  .page-actions{width:100%;display:flex;flex-wrap:wrap;gap:6px;}
+  .page-actions .btn{flex:1;font-size:11px;padding:8px 8px;text-align:center;min-width:80px;}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .stat-card{padding:12px;}
+  .stat-card .stat-num{font-size:28px;}
+  .overview{grid-template-columns:1fr;gap:10px;padding:14px 16px;}
+  .ov-pct{font-size:36px;}
+  .sig-grid-final{grid-template-columns:1fr;}
+  .date-bar{flex-wrap:wrap;gap:8px;padding:10px 12px;}
+  .date-display{font-size:12px;padding:5px 10px;}
+  #dashKpis{grid-template-columns:1fr 1fr;gap:8px;}
+  .kpi-card{padding:12px;}
+  .hdr-btn span{display:none;}
+  .hdr-btn{padding:6px 8px;font-size:13px;}
+  .logo-badge{display:none;}
+  .app-header{padding:0 10px;height:52px;}
+  .hdr-title{font-size:13px;}
+  .hdr-sub{display:none;}
+  .data-table th,.data-table td{padding:7px 8px;font-size:11px;}
+  .cond-grid{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .modal{width:95vw;padding:16px;}
+  .modal-lg{width:95vw;}
+  .email-modal{width:100%;}
+  .month-pills{gap:4px;}
+  .month-pill{padding:4px 8px;font-size:10px;}
+  canvas{max-width:100%!important;}
+  .sec-title{font-size:14px;}
+  .section-card{border-radius:8px;}
+  /* Config mobile */
+  #tab-config .data-table{font-size:11px;}
+  #tab-config .data-table input{font-size:11px;padding:4px 6px;}
+  #tab-config .btn{font-size:11px;padding:6px 8px;}
+}
+@media(max-width:400px){
+  .page-title{font-size:20px;}
+  #dashKpis{grid-template-columns:1fr 1fr;}
+  .kpi-num{font-size:22px;}
+  .tab-btn{font-size:10px;padding:9px 8px;}
+  .stat-card .stat-num{font-size:24px;}
+}
+
+/* ─── PRINT / EXPORT ─── */
+@media print{
+  .app-header,.tab-nav,.date-bar,.hdr-btn,.date-nav-btn,.date-today-btn{display:none!important;}
+  .tab-content{display:block!important;}
+  .section-card.collapsed .section-body{max-height:none!important;}
+}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+  .cond-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .main{padding:14px;}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:1fr;}
+  .tab-btn{padding:10px 12px;font-size:11px;}
+  .hdr-btn span{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<!-- ══ LOGIN PIN ════════════════════════════════════════ -->
+<div id="loginScreen">
+  <!-- Burbujas animadas de fondo -->
+  <div class="splash-bg">
+    <div class="bubble b1"></div><div class="bubble b2"></div>
+    <div class="bubble b3"></div><div class="bubble b4"></div>
+    <div class="bubble b5"></div>
+  </div>
+
+  <div class="splash-card">
+    <!-- Logo principal -->
+    <div class="splash-logo-wrap">
+      <div class="splash-drop">
+        <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="60" height="80">
+          <path d="M30 4 C30 4 4 38 4 52 C4 67 16 76 30 76 C44 76 56 67 56 52 C56 38 30 4 30 4Z"
+            fill="url(#dropGrad)" opacity="0.95"/>
+          <path d="M18 55 C18 62 23 68 30 68" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round"/>
+          <text x="30" y="58" text-anchor="middle" fill="white" font-size="20" font-weight="bold">💧</text>
+          <defs>
+            <linearGradient id="dropGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2589c7"/>
+              <stop offset="100%" stop-color="#0d8a7a"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Nombre del programa -->
+    <div class="splash-name">AquaControl<span>Pro</span></div>
+    <div class="splash-tagline">PPCL Legionella · Almacén Antequera · 2026</div>
+    <div class="splash-company">DIAGROUP</div>
+
+    <!-- Separador -->
+    <div class="splash-divider"></div>
+    <div class="splash-pin-label">🔐 Introduce tu PIN de acceso</div>
+
+    <!-- PIN dots -->
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+
+    <!-- Teclado PIN -->
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn" onclick="pinClear()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="splash-hint">PIN por defecto: 2026</div>
+  </div>
+</div>
+<header class="app-header">
+  <div class="hdr-left">
+    <div class="hdr-logo">💧</div>
+    <div class="hdr-titles">
+      <div class="hdr-title">AquaControl<span style="color:#4dd0e1">Pro</span></div>
+      <div class="hdr-sub">PPCL LEGIONELLA · ALMACÉN · 2026</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="sync-indicator pending" id="hdrSyncIndicator">
+      <span class="sync-dot-hdr"></span>
+      <span id="hdrSyncText">Conectando…</span>
+    </div>
+    <span class="hdr-year" id="clockDisplay">--:--:--</span>
+    <button class="hdr-btn save" id="saveBtn" onclick="saveAll()">💾 <span>Guardar</span></button>
+    <button class="hdr-btn" onclick="exportData()">📊 <span>Excel</span></button>
+    <button class="hdr-btn" onclick="exportJSON()" style="background:#1a5276;color:#fff" title="Exportar datos para compartir con otro móvil">📤 <span>Compartir</span></button>
+    <button class="hdr-btn" onclick="importJSON()" style="background:#145a32;color:#fff" title="Importar datos de otro móvil">📥 <span>Importar</span></button>
+    <button class="hdr-btn email" onclick="sendEmail()">✉️ <span>Correo</span></button>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tab-nav">
+  <div class="tab-btn" onclick="switchTab('dashboard',this)">📊 Dashboard</div>
+  <div class="tab-btn active" onclick="switchTab('ppcl',this)">🌡️ Condensadores</div>
+  <div class="tab-btn" onclick="switchTab('evap',this)">🔵 Evaporativos Mensual</div>
+  <div class="tab-btn" onclick="switchTab('acs',this)">🚿 ACS Grifos</div>
+  <div class="tab-btn" onclick="switchTab('diario',this)">📋 Diario Box Lavado</div>
+  <div class="tab-btn" onclick="switchTab('potable',this)">💧 Agua Potable</div>
+  <div class="tab-btn" onclick="switchTab('config',this)">⚙️ Configuración</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══════════════ TAB DASHBOARD ═══════════════ -->
+  <div class="tab-content" id="tab-dashboard">
+    <div class="page-hdr" style="margin-bottom:16px">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="dashSubtitle">Resumen visual del programa PPCL · 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-outline" onclick="renderDashboard()">🔄 Actualizar</button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div id="dashKpis" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px"></div>
+
+    <!-- Gráfico 1: Progreso por sección -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon blue">📈</div>
+        <div><div class="sec-title">PROGRESO POR SECCIÓN</div><div class="sec-sub">% completado de cada checklist</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:16px">
+        <canvas id="chartProgress" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 2: Condensadores — PH del mes -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon teal">🌡️</div>
+        <div><div class="sec-title">CONDENSADORES — PH DIARIO</div><div class="sec-sub" id="dashCondSubtitle">Evolución del pH este mes</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:16px">
+        <canvas id="chartPh" height="200"></canvas>
+        <div style="display:flex;gap:8px;margin-top:10px;font-family:monospace;font-size:10px;color:var(--text3)">
+          <span style="color:var(--green)">■</span> Zona OK (7.0–8.0)
+          <span style="color:var(--amber);margin-left:8px">■</span> Advertencia (6.5–7.0 / 8.0–8.5)
+          <span style="color:var(--red);margin-left:8px">■</span> Fuera de rango
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráfico 3: Temperatura condensadores -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon amber">🌡️</div>
+        <div><div class="sec-title">CONDENSADORES — TEMPERATURA (°C)</div><div class="sec-sub">Evolución de temperatura este mes</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:16px">
+        <canvas id="chartTemp" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 4: Evaporativos PH -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon blue">🔵</div>
+        <div><div class="sec-title">EVAPORATIVOS — PH MENSUAL</div><div class="sec-sub">Estado PH por evaporativo</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:16px">
+        <canvas id="chartEvapPh" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 5: Agua Potable resultados -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon teal">💧</div>
+        <div><div class="sec-title">AGUA POTABLE — RESULTADOS SEMANALES</div><div class="sec-sub">S = Correcto / N = Incorrecto</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:16px">
+        <canvas id="chartPotable" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- Tabla últimos registros -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon amber">📋</div>
+        <div><div class="sec-title">ÚLTIMAS LECTURAS REGISTRADAS</div><div class="sec-sub">10 registros más recientes</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;overflow-x:auto">
+        <table class="data-table" id="dashRecentTable">
+          <thead><tr>
+            <th>Fecha</th><th>Sección</th><th>Punto</th>
+            <th class="center">Valor</th><th class="center">Estado</th>
+          </tr></thead>
+          <tbody id="dashRecentBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="section-card" style="margin-bottom:14px">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon red" style="background:var(--red-light)">⚠️</div>
+        <div><div class="sec-title">ALERTAS Y VALORES FUERA DE RANGO</div><div class="sec-sub">Requieren atención</div></div>
+        <span class="sec-badge badge-err" id="dashAlertBadge">0</span>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:12px" id="dashAlerts">
+        <div style="text-align:center;color:var(--text4);font-family:monospace;font-size:12px;padding:20px">
+          ✅ Sin alertas activas
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB PPCL ═══════════════ -->
+  <div class="tab-content active" id="tab-ppcl">
+
+    <div class="date-bar">
+      <span class="date-bar-label">Mes activo</span>
+      <div class="month-pills" id="ppclMonthPills" style="margin-bottom:0;"></div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <span class="date-bar-label">Año</span>
+        <input type="number" class="date-input" id="ppclYear" value="2026" min="2020" max="2040" style="width:80px" onchange="renderPPCL()">
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card blue"><div class="stat-num" id="ppclTotal">0</div><div class="stat-label">Registros totales</div></div>
+      <div class="stat-card teal"><div class="stat-num" id="ppclDone">0</div><div class="stat-label">Completados</div></div>
+      <div class="stat-card amber"><div class="stat-num" id="ppclPend">0</div><div class="stat-label">Pendientes</div></div>
+      <div class="stat-card green"><div class="stat-num" id="ppclPct">0%</div><div class="stat-label">% Completado</div></div>
+    </div>
+
+    <div class="section-card" id="ppclCard">
+      <div class="section-head" onclick="toggleSec('ppclCard')">
+        <div class="sec-icon blue">🌡️</div>
+        <div>
+          <div class="sec-title">Condensadores Evaporativos — Control Diario</div>
+          <div class="sec-sub">BIOCIDAD · TEMPERATURA · PH · TURBIDEZ (DIARIA)</div>
+        </div>
+        <span class="sec-badge badge-blue" id="ppclBadge">31 días</span>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px">
+        <div class="cond-grid" id="ppclGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB EVAPORATIVOS MENSUAL ═══════════════ -->
+  <div class="tab-content" id="tab-evap">
+    <div class="date-bar">
+      <span class="date-bar-label">Mes activo</span>
+      <div class="month-pills" id="evapMonthPills" style="margin-bottom:0;"></div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <span class="date-bar-label">Año</span>
+        <input type="number" class="date-input" id="evapYear" value="2026" min="2020" max="2040" style="width:80px" onchange="renderEvap()">
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card blue"><div class="stat-num" id="evapTotal">0</div><div class="stat-label">Registros totales</div></div>
+      <div class="stat-card teal"><div class="stat-num" id="evapDone">0</div><div class="stat-label">Completados</div></div>
+      <div class="stat-card amber"><div class="stat-num" id="evapPend">0</div><div class="stat-label">Pendientes</div></div>
+      <div class="stat-card green"><div class="stat-num" id="evapPct">0%</div><div class="stat-label">% Completado</div></div>
+    </div>
+    <div id="evapContent"></div>
+  </div>
+
+  <!-- ═══════════════ TAB ACS ═══════════════ -->
+  <div class="tab-content" id="tab-acs">
+
+    <div class="date-bar">
+      <span class="date-bar-label">Semana</span>
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="changeAcsWeek(-1)">‹</button>
+        <span class="date-display" id="acsWeekDisplay">—</span>
+        <button class="date-nav-btn" onclick="changeAcsWeek(1)">›</button>
+      </div>
+      <input type="date" class="date-input" id="acsDate" onchange="updateAcsWeek()">
+      <button class="date-today-btn" onclick="setAcsToday()">Hoy</button>
+      <div style="margin-left:auto">
+        <span class="date-bar-label">Vista</span>
+        <select class="date-input" id="acsView" onchange="renderACS()" style="margin-left:8px">
+          <option value="semanal">Semanal</option>
+          <option value="mensual">Mensual</option>
+          <option value="depositos">Depósitos</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="acsContent"></div>
+  </div>
+
+  <!-- ═══════════════ TAB DIARIO ═══════════════ -->
+  <div class="tab-content" id="tab-diario">
+
+    <div class="date-bar">
+      <span class="date-bar-label">Fecha</span>
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="changeDiarioDay(-1)">‹</button>
+        <span class="date-display" id="diarioDateDisplay">—</span>
+        <button class="date-nav-btn" onclick="changeDiarioDay(1)">›</button>
+      </div>
+      <input type="date" class="date-input" id="diarioDate" onchange="updateDiarioDate()">
+      <button class="date-today-btn" onclick="setDiarioToday()">Hoy</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card blue"><div class="stat-num" id="diarTotal">0</div><div class="stat-label">Registros día</div></div>
+      <div class="stat-card teal"><div class="stat-num" id="diarDone">0</div><div class="stat-label">Completados</div></div>
+      <div class="stat-card amber"><div class="stat-num" id="diarPend">0</div><div class="stat-label">Pendientes</div></div>
+      <div class="stat-card green"><div class="stat-num" id="diarPct">0%</div><div class="stat-label">% Completado</div></div>
+    </div>
+
+    <div id="diarioContent"></div>
+  </div>
+
+
+  <!-- ═══════════════ TAB CONFIGURACIÓN ═══════════════ -->
+  <div class="tab-content" id="tab-config">
+    <div class="page-hdr">
+      <div>
+        <div class="page-title">⚙️ Configuración</div>
+        <div class="page-sub">Personalizar puntos · PINs · Backup · Sincronización</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="saveAll();saveCfg()">💾 Guardar</button>
+        <button class="btn btn-outline" onclick="restoreDefaults()">🔄 Restaurar</button>
+      </div>
+    </div>
+
+    <!-- ESTADO SINCRONIZACIÓN FIREBASE -->
+    <div id="syncStatusBar" class="sync-status pending">
+      <span>⏳</span> <span id="syncStatusText">Conectando con Firebase...</span>
+    </div>
+
+    <!-- ── PIN DE APP ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon blue">🔐</div>
+        <div><div class="sec-title">PINs de acceso</div><div class="sec-sub">PIN de app y PIN de configuración</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="cfg-group-hdr">PIN APLICACIÓN (actual)</div>
+            <input type="password" class="form-input" id="cfgPinOld" maxlength="4" placeholder="PIN actual" style="margin-bottom:6px">
+            <input type="password" class="form-input" id="cfgPinNew" maxlength="4" placeholder="PIN nuevo">
+            <button class="btn btn-primary" style="width:100%;margin-top:8px;font-size:12px" onclick="changePIN()">Cambiar PIN app</button>
+            <div id="pinChangeMsg" style="font-family:monospace;font-size:10px;margin-top:6px;min-height:16px"></div>
+          </div>
+          <div>
+            <div class="cfg-group-hdr">PIN CONFIGURACIÓN (actual)</div>
+            <input type="password" class="form-input" id="cfgCfgPinOld" maxlength="4" placeholder="PIN actual (1234)" style="margin-bottom:6px">
+            <input type="password" class="form-input" id="cfgCfgPinNew" maxlength="4" placeholder="PIN nuevo">
+            <button class="btn btn-primary" style="width:100%;margin-top:8px;font-size:12px" onclick="changeCfgPIN()">Cambiar PIN config</button>
+            <div id="cfgPinChangeMsg2" style="font-family:monospace;font-size:10px;margin-top:6px;min-height:16px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GRIFOS ACS SEMANAL ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon teal">🚿</div>
+        <div><div class="sec-title">Grifos — Control Semanal</div><div class="sec-sub">Editar, añadir o eliminar grifos</div></div>
+        <span class="sec-badge badge-teal" id="cfgAcsSemCount">0</span>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:10px 12px">
+        <div id="cfgAcsSemList"></div>
+        <button class="cfg-add-btn" onclick="addAcsSemItem()">➕ Añadir nuevo grifo</button>
+      </div>
+    </div>
+
+    <!-- ── EVAPORATIVOS ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon blue">🔵</div>
+        <div><div class="sec-title">Evaporativos</div><div class="sec-sub">Editar, añadir o eliminar evaporativos</div></div>
+        <span class="sec-badge badge-blue" id="cfgEvapCount">0</span>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:10px 12px">
+        <div id="cfgEvapList"></div>
+        <button class="cfg-add-btn" onclick="addEvapItem()">➕ Añadir evaporativo</button>
+      </div>
+    </div>
+
+    <!-- ── DIARIO BOX LAVADO ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon teal">📋</div>
+        <div><div class="sec-title">Diario — Box Lavado</div><div class="sec-sub">Equipos de control diario</div></div>
+        <span class="sec-badge badge-teal" id="cfgDiarioCount">0</span>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:10px 12px">
+        <div id="cfgDiarioList"></div>
+        <button class="cfg-add-btn" onclick="addDiarioItem()">➕ Añadir equipo</button>
+      </div>
+    </div>
+
+    <!-- ── CALENDARIO AGUA POTABLE ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon teal">💧</div>
+        <div><div class="sec-title">Agua Potable — Calendario</div><div class="sec-sub">Grifo asignado por semana</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:10px 12px">
+        <div id="cfgPotableList"></div>
+        <button class="cfg-add-btn" onclick="addPotableItem()">➕ Añadir semana</button>
+      </div>
+    </div>
+
+    <!-- ── FIREBASE / SINCRONIZACIÓN ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon amber">🔥</div>
+        <div><div class="sec-title">Firebase — Sincronización</div><div class="sec-sub">Config de la base de datos en la nube</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:14px">
+        <!-- Barra de estado de sincronización -->
+        <div class="sync-status pending" id="syncStatusBar" style="margin-bottom:14px">
+          <span>⏳</span>
+          <span id="syncStatusText">Firebase no configurado — modo local activo</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <input type="text" class="form-input" id="fbApiKey" placeholder="AIzaSy…" style="font-size:11px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Database URL</label>
+          <input type="text" class="form-input" id="fbDbUrl" placeholder="https://…firebasedatabase.app" style="font-size:11px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Project ID</label>
+          <input type="text" class="form-input" id="fbProjectId" placeholder="ppcl-legionella-almacen" style="font-size:11px">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn btn-primary" style="flex:1;font-size:12px" onclick="saveFirebaseConfig()">🔥 Conectar Firebase</button>
+          <button class="btn btn-outline" style="flex:1;font-size:12px" onclick="testFirebaseConnection()">🧪 Probar conexión</button>
+        </div>
+        <div id="fbStatus" style="font-family:monospace;font-size:11px;margin-top:10px;min-height:16px"></div>
+        <div style="background:var(--green-light);border:1px solid rgba(26,122,74,0.25);border-radius:8px;padding:12px;margin-top:12px;font-size:12px;color:var(--green);line-height:1.7">
+          <strong>✅ Credenciales integradas en el código</strong><br>
+          Firebase está configurado para el proyecto <strong>ppcl-legionella-almacen</strong>.<br>
+          La sincronización es automática al abrir la app y al guardar cualquier dato.<br>
+          <span style="font-family:monospace;font-size:10px;color:var(--text3)">Reglas requeridas en Firebase Console → Realtime Database → Reglas:</span>
+          <code style="display:block;background:rgba(0,0,0,0.06);padding:5px 8px;border-radius:4px;margin-top:4px;font-size:11px">{"rules":{".read":true,".write":true}}</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BACKUP ── -->
+    <div class="section-card cfg-section">
+      <div class="sec-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sec-icon amber">💾</div>
+        <div><div class="sec-title">Backup y restauración</div><div class="sec-sub">Exportar e importar datos</div></div>
+        <span class="sec-toggle">▼</span>
+      </div>
+      <div class="section-body" style="max-height:9999px;padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-primary" onclick="exportJSON()" style="font-size:12px">📤 Exportar JSON</button>
+          <button class="btn btn-outline" onclick="importJSON()" style="font-size:12px">📥 Importar JSON</button>
+          <button class="btn btn-outline" onclick="exportData()" style="font-size:12px">📊 Descargar Excel</button>
+          <button class="btn btn-outline" style="background:var(--red-light);color:var(--red);border-color:var(--red);font-size:12px" onclick="restoreDefaults()">🔄 Borrar todo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB AGUA POTABLE ═══════════════ -->  <!-- ═══════════════ TAB AGUA POTABLE ═══════════════ -->
+  <div class="tab-content" id="tab-potable">
+    <div class="date-bar">
+      <span class="date-bar-label">Fecha</span>
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="changePotableDay(-1)">‹</button>
+        <span class="date-display" id="potableDateDisplay">—</span>
+        <button class="date-nav-btn" onclick="changePotableDay(1)">›</button>
+      </div>
+      <input type="date" class="date-input" id="potableDate" onchange="updatePotableDate()">
+      <button class="date-today-btn" onclick="setPotableToday()">Hoy</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card blue"><div class="stat-num" id="potTotal">0</div><div class="stat-label">Registros día</div></div>
+      <div class="stat-card teal"><div class="stat-num" id="potDone">0</div><div class="stat-label">Completados</div></div>
+      <div class="stat-card amber"><div class="stat-num" id="potPend">0</div><div class="stat-label">Pendientes</div></div>
+      <div class="stat-card green"><div class="stat-num" id="potPct">0%</div><div class="stat-label">% Completado</div></div>
+    </div>
+    <div id="potableContent"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONSTANTS & DATA
+// ═══════════════════════════════════════════════════════
+const MONTHS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+const MONTHS_SHORT = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+
+// ACS SEMANAL GRIFOS
+const ACS_SEMANAL = [
+  {n:'1',  ni:'46031', loc:'FUENTE AGUA CALLE 17'},
+  {n:'2',  ni:'46031', loc:'GRIFO DEPARTAMENTO CALIDAD (1)'},
+  {n:'3',  ni:'46031', loc:'GRIFO DEPARTAMENTO CALIDAD (2)'},
+  {n:'4',  ni:'46031', loc:'GRIFO DEPARTAMENTO CALIDAD (3)'},
+  {n:'5',  ni:'46035', loc:'GRIFO ASEO CAMARA'},
+  {n:'6',  ni:'46035', loc:'GRIFO FUENTE TRANSPORTES'},
+  {n:'7',  ni:'46035', loc:'GRIFO PILA SALA DE BATERIA'},
+  {n:'8',  ni:'46035', loc:'GRIFO ASEO WC SECO'},
+  {n:'9',  ni:'46041', loc:'GRIFO VESTUARIOS HOMBRES (1)'},
+  {n:'10', ni:'46041', loc:'GRIFO VESTUARIOS HOMBRES (2)'},
+  {n:'11', ni:'46041', loc:'GRIFO VESTUARIOS HOMBRES (3)'},
+  {n:'12', ni:'46041', loc:'GRIFO VESTUARIOS HOMBRES (4)'},
+  {n:'13', ni:'46048', loc:'GRIFO ASEO WC TRANSPORTES'},
+  {n:'14A',ni:'46048', loc:'GRIFO ASEO FEMENINO OFICINA 1'},
+  {n:'14B',ni:'46048', loc:'GRIFO ASEO FEMENINO OFICINA 2'},
+  {n:'14C',ni:'46048', loc:'GRIFO ASEO FEMENINO OFICINA 3'},
+  {n:'15A',ni:'46055', loc:'GRIFO ASEO MASCULINO OFICINA 1'},
+  {n:'15B',ni:'46055', loc:'GRIFO ASEO MASCULINO OFICINA 2'},
+  {n:'15C',ni:'46055', loc:'GRIFO ASEO MASCULINO OFICINA 3'},
+  {n:'16', ni:'46055', loc:'GRIFOS VESTUARIOS MUJERES (1)'},
+  {n:'17', ni:'46062', loc:'GRIFOS VESTUARIOS MUJERES (2)'},
+  {n:'18', ni:'46062', loc:'GRIFOS VESTUARIOS MUJERES (3)'},
+  {n:'19', ni:'46062', loc:'GRIFO PATIO ZONA CUBA PALET'},
+  {n:'20', ni:'46062', loc:'GRIFO FUENTE MUELLE SECO'},
+  {n:'21', ni:'46069', loc:'GRIFO COMEDOR OFICINA'},
+  {n:'22', ni:'46069', loc:'GRIFO COMEDOR MOZO'},
+  {n:'24', ni:'46069', loc:'GRIFO FUENTE MUELLE FRUTA'},
+  {n:'26', ni:'46069', loc:'GRIFO ARMARIO PLACAS'},
+  {n:'28', ni:'46076', loc:'GRIFO HIDROLIMPIADORA'},
+  {n:'29', ni:'46076', loc:'GRIFO CUBA ORGANICA'},
+  {n:'30', ni:'46076', loc:'DUCHA VESTUARIOS MASCULINO (1)'},
+  {n:'31', ni:'46076', loc:'DUCHA VESTUARIOS MASCULINO (2)'},
+  {n:'32', ni:'46083', loc:'DUCHA VESTUARIOS MASCULINO (3)'},
+  {n:'33', ni:'46083', loc:'DUCHA VESTUARIOS MASCULINO (4)'},
+  {n:'34', ni:'46083', loc:'DUCHA VESTUARIOS MASCULINO (5)'},
+  {n:'35', ni:'46083', loc:'DUCHA VESTUARIOS MASCULINO (6)'},
+  {n:'36', ni:'46090', loc:'DUCHA VESTUARIOS MASCULINO (7)'},
+  {n:'37', ni:'46090', loc:'DUCHA VESTUARIOS MASCULINO (8)'},
+  {n:'38', ni:'46090', loc:'DUCHA VESTUARIOS FEMENINO'},
+];
+
+// ACS MENSUAL — agrupado por mes
+const ACS_MENSUAL = [
+  {mes:'ENERO',    items:[{n:'1',ni:'46035',loc:'FUENTE AGUA CALLE 17'},{n:'2',ni:'46035',loc:'GRIFO DEPARTAMENTO CALIDAD (1)'},{n:'3',ni:'46035',loc:'GRIFO DEPARTAMENTO CALIDAD (2)'},{n:'4',ni:'46035',loc:'GRIFO DEPARTAMENTO CALIDAD (3)'}]},
+  {mes:'FEBRERO',  items:[{n:'5',ni:'46055',loc:'GRIFO ASEO CAMARA'},{n:'6',ni:'46055',loc:'GRIFO FUENTE TRANSPORTES'},{n:'7',ni:'46055',loc:'GRIFO PILA SALA DE BATERIA'},{n:'8',ni:'46055',loc:'GRIFO ASEO WC SECO'}]},
+  {mes:'MARZO',    items:[{n:'9',ni:'46083',loc:'GRIFO VESTUARIOS HOMBRES (1)'},{n:'10',ni:'46083',loc:'GRIFO VESTUARIOS HOMBRES (2)'},{n:'11',ni:'46083',loc:'GRIFO VESTUARIOS HOMBRES (3)'},{n:'12',ni:'46083',loc:'GRIFO VESTUARIOS HOMBRES (4)'}]},
+  {mes:'ABRIL',    items:[{n:'13',ni:'46118',loc:'GRIFO ASEO WC TRANSPORTES'},{n:'14A',ni:'46118',loc:'GRIFO ASEO FEMENINO OFICINA 1'},{n:'14B',ni:'46118',loc:'GRIFO ASEO FEMENINO OFICINA 2'}]},
+  {mes:'MAYO',     items:[{n:'14C',ni:'46146',loc:'GRIFO ASEO FEMENINO OFICINA 3'},{n:'15A',ni:'46146',loc:'GRIFO ASEO MASCULINO OFICINA 1'},{n:'15B',ni:'46146',loc:'GRIFO ASEO MASCULINO OFICINA 2'}]},
+  {mes:'JUNIO',    items:[{n:'15C',ni:'46174',loc:'GRIFO ASEO MASCULINO OFICINA 3'},{n:'16',ni:'46174',loc:'GRIFOS VESTUARIOS MUJERES (1)'},{n:'17',ni:'46174',loc:'GRIFOS VESTUARIOS MUJERES (2)'}]},
+  {mes:'JULIO',    items:[{n:'18',ni:'46204',loc:'GRIFOS VESTUARIOS MUJERES (3)'},{n:'19',ni:'46204',loc:'GRIFO PATIO ZONA CUBA PALET'},{n:'20',ni:'46204',loc:'GRIFO FUENTE MUELLE SECO'}]},
+  {mes:'AGOSTO',   items:[{n:'21',ni:'46237',loc:'GRIFO COMEDOR OFICINA'},{n:'22',ni:'46237',loc:'GRIFO COMEDOR MOZO'},{n:'24',ni:'46237',loc:'GRIFO FUENTE MUELLE FRUTA'}]},
+  {mes:'SEPTIEMBRE',items:[{n:'26',ni:'46266',loc:'GRIFO ARMARIO PLACAS'},{n:'28',ni:'46266',loc:'GRIFO HIDROLIMPIADORA'},{n:'29',ni:'46266',loc:'GRIFO CUBA ORGANICA'}]},
+  {mes:'OCTUBRE',  items:[{n:'30',ni:'46296',loc:'DUCHA VESTUARIOS MASCULINO (1)'},{n:'31',ni:'46296',loc:'DUCHA VESTUARIOS MASCULINO (2)'},{n:'32',ni:'46296',loc:'DUCHA VESTUARIOS MASCULINO (3)'}]},
+  {mes:'NOVIEMBRE',items:[{n:'33',ni:'46328',loc:'DUCHA VESTUARIOS MASCULINO (4)'},{n:'34',ni:'46328',loc:'DUCHA VESTUARIOS MASCULINO (5)'},{n:'35',ni:'46328',loc:'DUCHA VESTUARIOS MASCULINO (6)'}]},
+  {mes:'DICIEMBRE',items:[{n:'36',ni:'46357',loc:'DUCHA VESTUARIOS MASCULINO (7)'},{n:'37',ni:'46357',loc:'DUCHA VESTUARIOS MASCULINO (8)'},{n:'38',ni:'46357',loc:'DUCHA VESTUARIOS FEMENINO'},{n:'28',ni:'46357',loc:'BOX LAVADO DE ISOTERMOS'}]},
+];
+
+// ACS DEPÓSITOS (mensual)
+const ACS_DEPOSITOS = [
+  {mes:'ENERO'},{mes:'FEBRERO'},{mes:'MARZO'},{mes:'ABRIL'},{mes:'MAYO'},{mes:'JUNIO'},
+  {mes:'JULIO'},{mes:'AGOSTO'},{mes:'SEPTIEMBRE'},{mes:'OCTUBRE'},{mes:'NOVIEMBRE'},{mes:'DICIEMBRE'},
+];
+
+// DIARIO — equipos
+const DIARIO_ITEMS = [
+  {n:'40', loc:'DEPOSITO APORTE BOX LAVADO'},
+  {n:'5',  loc:'LAVAVO ASEO ANTECAMARA CONGELADO'},
+];
+
+// EVAPORATIVOS MENSUAL — 26 evaporativos, meses activos Mayo-Sep (resto también disponibles)
+const EVAP_ITEMS = Array.from({length:26}, (_,i)=>({n:String(i+1), loc:'EVAPORATIVO Nº '+(i+1)}));
+
+// AGUA POTABLE — tabla exacta del fichero Excel DIARIO AGUA POTABLE
+// Cada entrada: fecha del lunes de esa semana → grifo asignado
+// El usuario puede elegir libremente la semana desde el selector de fecha
+const POTABLE_CALENDARIO = [
+  // Enero — cada grifo tiene su propia semana
+  {lunes:'2026-01-02', grifo:'Fuente Calle Nº 7'},
+  {lunes:'2026-01-07', grifo:'Grifo 2'},
+  {lunes:'2026-01-12', grifo:'Grifo 3'},
+  {lunes:'2026-01-19', grifo:'Grifo 5 (Calidad)'},
+  {lunes:'2026-01-26', grifo:'Fuente Transportes 6'},
+  {lunes:'2026-02-02', grifo:'Grifo Pila Batería 7'},
+  // Febrero
+  {lunes:'2026-01-28', grifo:'Grifo Fuente WC Seco 8'},
+  {lunes:'2026-02-09', grifo:'Grifo Fuente WC Seco 9'},
+  {lunes:'2026-02-16', grifo:'Grifo Vestuario 10'},
+  {lunes:'2026-02-23', grifo:'Grifo Comedor 11'},
+  // Marzo
+  {lunes:'2026-03-02', grifo:'Grifo Vestuario 12'},
+  {lunes:'2026-03-09', grifo:'Grifo Vestuario 13'},
+  {lunes:'2026-03-16', grifo:'Grifo Vestuario 14'},
+  {lunes:'2026-03-23', grifo:'Grifo 15'},
+  {lunes:'2026-03-30', grifo:'Grifo 19'},
+  // Abril
+  {lunes:'2026-04-06', grifo:'Grifo 20'},
+  {lunes:'2026-04-13', grifo:'Grifo 22'},
+  {lunes:'2026-04-20', grifo:'Grifo 24'},
+  {lunes:'2026-04-27', grifo:'Grifo 26'},
+  // Mayo
+  {lunes:'2026-05-04', grifo:'Grifo 27'},
+  {lunes:'2026-05-11', grifo:'Grifo 28 (Hidrolimpiadora)'},
+  {lunes:'2026-05-18', grifo:'Grifo 29 (Cuba Orgánica)'},
+  {lunes:'2026-05-25', grifo:'Grifo 17 (Vestuario Mujeres)'},
+  // Junio
+  {lunes:'2026-06-01', grifo:'Grifo 2'},
+  {lunes:'2026-06-08', grifo:'Grifo 3'},
+  {lunes:'2026-06-15', grifo:'Grifo 4'},
+  {lunes:'2026-06-22', grifo:'Grifo 5'},
+  {lunes:'2026-06-29', grifo:'Grifo 6'},
+  // Julio
+  {lunes:'2026-07-06', grifo:'Grifo 18'},
+  {lunes:'2026-07-13', grifo:'Grifo 19'},
+  {lunes:'2026-07-20', grifo:'Grifo 20'},
+  {lunes:'2026-07-27', grifo:'Grifo 21'},
+  // Agosto
+  {lunes:'2026-08-03', grifo:'Grifo 22'},
+  {lunes:'2026-08-10', grifo:'Grifo 24'},
+  {lunes:'2026-08-17', grifo:'Grifo 26'},
+  {lunes:'2026-08-24', grifo:'Grifo 27'},
+  {lunes:'2026-08-31', grifo:'Grifo 28'},
+  // Septiembre
+  {lunes:'2026-09-07', grifo:'Grifo 29'},
+  {lunes:'2026-09-14', grifo:'Grifo 17'},
+  {lunes:'2026-09-21', grifo:'Grifo 18'},
+  {lunes:'2026-09-28', grifo:'Grifo 9'},
+  // Octubre
+  {lunes:'2026-10-05', grifo:'Grifo 10'},
+  {lunes:'2026-10-12', grifo:'Grifo 3'},
+  {lunes:'2026-10-19', grifo:'Grifo 19'},
+  {lunes:'2026-10-26', grifo:'Grifo 20'},
+  // Noviembre
+  {lunes:'2026-11-02', grifo:'Grifo 22'},
+  {lunes:'2026-11-09', grifo:'Fuente Agua Nº 7'},
+  {lunes:'2026-11-16', grifo:'Grifo Nº 2 Calidad'},
+  {lunes:'2026-11-23', grifo:'Grifo Nº 3 Calidad'},
+  {lunes:'2026-11-30', grifo:'Grifo Nº 4 Calidad'},
+  // Diciembre
+  {lunes:'2026-12-07', grifo:'Fuente 6'},
+  {lunes:'2026-12-14', grifo:'Grifo 7'},
+  {lunes:'2026-12-21', grifo:'Grifo 8'},
+  {lunes:'2026-12-28', grifo:'Grifo 9'},
+];
+
+function getPotableGrifoSemana(wk){
+  // wk = 'YYYY-MM-DD' (lunes de la semana seleccionada)
+  // Buscar la entrada exacta o la más cercana anterior
+  const entry = POTABLE_CALENDARIO.find(e => e.lunes === wk)
+             || POTABLE_CALENDARIO.slice().reverse().find(e => e.lunes <= wk)
+             || POTABLE_CALENDARIO[0];
+  // Calcular nº de semana ISO
+  const [y,m,d] = wk.split('-').map(Number);
+  const lun  = new Date(y, m-1, d);
+  const jan1 = new Date(y, 0, 1);
+  const nsem = Math.ceil(((lun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return {lunes: entry.lunes, grifo: entry.grifo, nsem};
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE & STORAGE
+// ═══════════════════════════════════════════════════════
+const SK = 'ppcl_legionella_v1';
+let data = {};
+
+// Canal de sincronización entre pestañas/dispositivos del MISMO navegador
+let syncChannel = null;
+try { syncChannel = new BroadcastChannel('ppcl_sync'); } catch(e) {}
+
+function loadData(){
+  try{ data = JSON.parse(localStorage.getItem(SK)||'{}'); }catch(e){ data={}; }
+}
+
+function saveData(){
+  data.__ts = Date.now();
+  const payload = JSON.stringify(data);
+  localStorage.setItem(SK, payload);
+  // Broadcast a otras pestañas del mismo dispositivo
+  try{ if(syncChannel) syncChannel.postMessage({type:'update', payload}); }catch(e){}
+  // Sync to Firebase (other devices) — sólo si está configurado
+  if(fbConfigured) saveToFirebase();
+  const t = new Date().toLocaleTimeString('es-ES');
+  const el = document.getElementById('sb-saved');
+  if(el) el.textContent = t;
+}
+
+// Escuchar cambios de otras pestañas del mismo dispositivo
+if(syncChannel){
+  syncChannel.onmessage = (evt) => {
+    if(evt.data && evt.data.type === 'update'){
+      try{
+        const incoming = JSON.parse(evt.data.payload);
+        if(!data.__ts || incoming.__ts > data.__ts){
+          data = incoming;
+          refreshAllViews();
+          showToast('🔄 Vista actualizada desde otra pestaña');
+        }
+      }catch(e){}
+    }
+  };
+}
+
+// También escuchar cambios en localStorage desde otras pestañas (Firefox/Safari)
+window.addEventListener('storage', (e) => {
+  if(e.key === SK && e.newValue){
+    try{
+      const incoming = JSON.parse(e.newValue);
+      if(!data.__ts || (incoming.__ts && incoming.__ts > data.__ts)){
+        data = incoming;
+        refreshAllViews();
+        showToast('🔄 Datos actualizados');
+      }
+    }catch(err){}
+  }
+});
+
+function refreshAllViews(){
+  renderPPCL();
+  renderEvap();
+  renderACS();
+  renderDiario();
+  renderPotable();
+}
+
+// EXPORTAR JSON para compartir entre móviles distintos
+function exportJSON(){
+  const payload = JSON.stringify(data, null, 2);
+  const blob = new Blob([payload], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'PPCL_datos_'+localDateStr(new Date())+'.json';
+  a.click();
+  showToast('📤 Datos exportados como JSON');
+}
+
+// IMPORTAR JSON de otro móvil
+function importJSON(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try{
+        const incoming = JSON.parse(ev.target.result);
+        // Merge: incoming gana si es más reciente
+        if(!data.__ts || !incoming.__ts || incoming.__ts >= data.__ts){
+          data = incoming;
+        } else {
+          // Merge campo a campo — incoming tiene prioridad sobre vacíos
+          Object.keys(incoming).forEach(k => {
+            if(!data[k] && incoming[k]) data[k] = incoming[k];
+          });
+        }
+        saveData();
+        refreshAllViews();
+        showToast('📥 Datos importados correctamente');
+      }catch(err){ showToast('❌ Archivo JSON no válido'); }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+function getVal(key){ return data[key]||''; }
+function setVal(key,val){
+  data[key]=val;
+  saveData();
+  updateAllStats();
+}
+function makeKey(...parts){ return parts.join('__'); }
+
+// ═══════════════════════════════════════════════════════
+//  CURRENT DATES
+// ═══════════════════════════════════════════════════════
+let ppclMonth = new Date().getMonth(); // 0-based
+let ppclYear  = new Date().getFullYear();
+let acsDate   = new Date();
+let diarioDate= new Date();
+
+// ═══════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════
+function switchTab(id, el){
+  // Config needs PIN
+  if(id==='config' && !_cfgUnlocked){
+    cfgPinBuffer='';
+    // Reset dots
+    for(let i=0;i<4;i++){const d=document.getElementById('cpd'+i);if(d){d.classList.remove('filled','error');}}
+    document.getElementById('cfgPinError').textContent='';
+    // Open overlay — add both 'open' class
+    openOverlay('configPinOverlay');
+    window._pendingTabEl = el;
+    window._pendingTabId = id;
+    return;
+  }
+  _doSwitchTab(id, el);
+}
+
+function _doSwitchTab(id, el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  updateAllStats();
+  if(id==='dashboard') setTimeout(renderDashboard,80);
+  if(id==='config')    setTimeout(renderConfig,50);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SECTION TOGGLE
+// ═══════════════════════════════════════════════════════
+function toggleSec(id){
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PPCL — CONDENSADORES
+// ═══════════════════════════════════════════════════════
+function renderPPCL(){
+  ppclYear  = parseInt(document.getElementById('ppclYear').value)||2026;
+  const daysInMonth = new Date(ppclYear, ppclMonth+1, 0).getDate();
+
+  // month pills
+  const pills = document.getElementById('ppclMonthPills');
+  pills.innerHTML = MONTHS.map((m,i)=>
+    `<div class="month-pill${i===ppclMonth?' active':''}" onclick="ppclMonth=${i};renderPPCL()">${MONTHS_SHORT[i]}</div>`
+  ).join('');
+
+  document.getElementById('ppclBadge').textContent = `${daysInMonth} días`;
+
+  // build grid: 2 columns (condensador 1 y 2)
+  const grid = document.getElementById('ppclGrid');
+  grid.innerHTML = '';
+
+  [1,2].forEach(cn=>{
+    const col = document.createElement('div');
+    col.className = 'cond-col';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'cond-header';
+    hdr.textContent = `CONDENSADOR EVAPORATIVO Nº ${cn}`;
+    col.appendChild(hdr);
+
+    const sh = document.createElement('div');
+    sh.className = 'cond-subheader';
+    ['DÍA','BIOCIDAD','TEMP.','PH','TURBIDEZ\nDIARIA'].forEach(h=>{
+      const d=document.createElement('div');d.className='cond-sh';d.textContent=h;sh.appendChild(d);
+    });
+    col.appendChild(sh);
+
+    for(let d=1;d<=daysInMonth;d++){
+      const row=document.createElement('div');row.className='cond-row';
+      // day number
+      const dayEl=document.createElement('div');dayEl.className='cond-day';dayEl.textContent=String(d).padStart(2,'0');
+      row.appendChild(dayEl);
+
+      ['biocidad','temperatura','ph','turbidez'].forEach((field,fi)=>{
+        const cell=document.createElement('div');cell.className='cond-cell';
+        const k=makeKey('ppcl',ppclYear,ppclMonth,cn,d,field);
+        const inp=document.createElement('input');
+        inp.type='text';inp.className='cell-input';
+        inp.placeholder=field==='ph'?'7.x':field==='temperatura'?'°C':field==='turbidez'?'NTU':'';
+        inp.setAttribute('inputmode','decimal');
+        inp.value=getVal(k);
+        inp.dataset.key=k;
+        inp.addEventListener('change',e=>{setVal(e.target.dataset.key,e.target.value);colorInput(e.target,field);updatePPCLStats();saveData();});
+        inp.addEventListener('input',e=>colorInput(e.target,field));
+        colorInput(inp,field);
+        cell.appendChild(inp);
+        row.appendChild(cell);
+      });
+      col.appendChild(row);
+    }
+    grid.appendChild(col);
+  });
+  updatePPCLStats();
+}
+
+function colorInput(inp,field){
+  const v=inp.value.trim();
+  if(!v){inp.classList.remove('ok','warn','bad');return;}
+  const n=parseFloat(v);
+  inp.classList.remove('ok','warn','bad');
+  if(field==='ph'){
+    if(n>=7.0&&n<=8.0) inp.classList.add('ok');
+    else if(n>=6.5&&n<=8.5) inp.classList.add('warn');
+    else inp.classList.add('bad');
+  } else if(field==='temperatura'){
+    if(n<=25) inp.classList.add('ok');
+    else if(n<=35) inp.classList.add('warn');
+    else inp.classList.add('bad');
+  } else {
+    inp.classList.add('ok');
+  }
+}
+
+function updatePPCLStats(){
+  const all=document.querySelectorAll('#ppclGrid .cell-input');
+  const total=all.length;
+  const done=[...all].filter(i=>i.value.trim()).length;
+  const pend=total-done;
+  document.getElementById('ppclTotal').textContent=total;
+  document.getElementById('ppclDone').textContent=done;
+  document.getElementById('ppclPend').textContent=pend;
+  document.getElementById('ppclPct').textContent=total?Math.round(done/total*100)+'%':'0%';
+}
+
+// ═══════════════════════════════════════════════════════
+//  ACS
+// ═══════════════════════════════════════════════════════
+// Formatea una fecha YYYY-MM-DD a texto legible "lun 4 may 2026"
+function formatSepDate(ymd){
+  if(!ymd) return '';
+  const [y,m,d] = ymd.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  return dt.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+
+// Devuelve "YYYY-MM-DD" del lunes de la semana, SIN conversión UTC
+function getWeekKey(d){
+  const dt = new Date(d);
+  // getDay(): 0=dom,1=lun...6=sab  → queremos lunes=0 de offset
+  const dow = dt.getDay(); // 0=dom
+  const offsetToMon = dow === 0 ? -6 : 1 - dow; // retroceder hasta el lunes
+  const mon = new Date(dt);
+  mon.setDate(dt.getDate() + offsetToMon);
+  // Formato local YYYY-MM-DD sin usar toISOString (evita problema UTC)
+  const y = mon.getFullYear();
+  const m = String(mon.getMonth()+1).padStart(2,'0');
+  const day2 = String(mon.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day2}`;
+}
+
+// Texto legible "Semana del DD/MM al DD/MM/YYYY"
+function weekLabel(wk){
+  const [y,m,d] = wk.split('-').map(Number);
+  const lun = new Date(y, m-1, d);
+  const dom = new Date(y, m-1, d+6);
+  const fmt = dt => dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+  return `${fmt(lun)} – ${fmt(dom)} ${dom.getFullYear()}`;
+}
+
+// Fecha local YYYY-MM-DD sin toISOString
+function localDateStr(dt){
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  const d = String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function setAcsToday(){
+  acsDate = new Date();
+  document.getElementById('acsDate').value = localDateStr(acsDate);
+  renderACS();
+}
+function updateAcsWeek(){
+  const v = document.getElementById('acsDate').value;
+  if(v){ const [y,m,d]=v.split('-').map(Number); acsDate=new Date(y,m-1,d); }
+  renderACS();
+}
+function changeAcsWeek(delta){
+  const view = document.getElementById('acsView').value;
+  if(view==='semanal') acsDate.setDate(acsDate.getDate() + delta*7);
+  else acsDate.setMonth(acsDate.getMonth() + delta);
+  document.getElementById('acsDate').value = localDateStr(acsDate);
+  renderACS();
+}
+
+function renderACS(){
+  const view = document.getElementById('acsView').value;
+  const wk   = getWeekKey(acsDate);
+  const mo   = acsDate.getMonth();
+  const yr   = acsDate.getFullYear();
+
+  if(view==='semanal'){
+    document.getElementById('acsWeekDisplay').textContent = weekLabel(wk);
+    renderAcsSemanal(wk);
+  } else if(view==='mensual'){
+    document.getElementById('acsWeekDisplay').textContent = `${MONTHS[mo]} ${yr}`;
+    renderAcsMensual(mo, yr);
+  } else {
+    document.getElementById('acsWeekDisplay').textContent = `Depósitos ${yr}`;
+    renderAcsDepositos(yr);
+  }
+}
+
+// Modal de fecha para separadores ACS
+let _datePickerKey = '';
+let _datePickerOriginal = '';
+
+function openDatePicker(key, currentDate){
+  _datePickerKey = key;
+  _datePickerOriginal = currentDate || localDateStr(new Date());
+  const parts = (_datePickerOriginal || localDateStr(new Date())).split('-');
+  const y = parseInt(parts[0]||2026);
+  const m = parseInt(parts[1]||1)-1;
+  const d = parseInt(parts[2]||1);
+
+  // Fill year select
+  const ysel = document.getElementById('dpYear');
+  ysel.innerHTML = '';
+  for(let yr=2024;yr<=2030;yr++){
+    const o=document.createElement('option');
+    o.value=yr;o.textContent=yr;if(yr===y)o.selected=true;
+    ysel.appendChild(o);
+  }
+  // Fill month select
+  const msel = document.getElementById('dpMonth');
+  msel.innerHTML = '';
+  ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].forEach((mn,i)=>{
+    const o=document.createElement('option');
+    o.value=i+1;o.textContent=mn;if(i===m)o.selected=true;
+    msel.appendChild(o);
+  });
+  // Fill day select
+  updateDpDays();
+  document.getElementById('dpDay').value = d;
+  updateDpPreview();
+  document.getElementById('datePickerOverlay').classList.add('open');
+}
+
+function updateDpDays(){
+  const y = parseInt(document.getElementById('dpYear').value);
+  const m = parseInt(document.getElementById('dpMonth').value);
+  const days = new Date(y,m,0).getDate();
+  const dsel = document.getElementById('dpDay');
+  const prev = dsel.value;
+  dsel.innerHTML = '';
+  for(let d=1;d<=days;d++){
+    const o=document.createElement('option');
+    o.value=d;o.textContent=String(d).padStart(2,'0');
+    dsel.appendChild(o);
+  }
+  dsel.value = Math.min(parseInt(prev)||1, days);
+}
+
+function updateDpPreview(){
+  const y = document.getElementById('dpYear').value;
+  const m = String(document.getElementById('dpMonth').value).padStart(2,'0');
+  const d = String(document.getElementById('dpDay').value).padStart(2,'0');
+  const dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+  document.getElementById('dpPreview').textContent =
+    dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+function confirmDatePicker(){
+  const y = document.getElementById('dpYear').value;
+  const m = String(document.getElementById('dpMonth').value).padStart(2,'0');
+  const d = String(document.getElementById('dpDay').value).padStart(2,'0');
+  const newDate = y+'-'+m+'-'+d;
+  setVal(_datePickerKey, newDate);
+  // Update label in DOM
+  document.querySelectorAll('.sep-date-label').forEach(lbl=>{
+    const btn = lbl.nextElementSibling;
+    if(btn && btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(_datePickerKey)){
+      lbl.textContent = formatSepDate(newDate);
+    }
+  });
+  closeDatePicker();
+  showToast('📅 Fecha actualizada: '+formatSepDate(newDate));
+}
+
+function closeDatePicker(){
+  document.getElementById('datePickerOverlay').classList.remove('open');
+}
+function closeOverlay(id){
+  const el = document.getElementById(id);
+  if(el){
+    el.classList.remove('open');
+    // Force hide for overlays that use inline style
+    if(id==='configPinOverlay') el.style.display='none';
+  }
+}
+function openOverlay(id){
+  const el = document.getElementById(id);
+  if(el){ el.classList.add('open'); el.style.display='flex'; }
+}
+
+function onSepDateChange(inp){
+  setVal(inp.dataset.key, inp.value);
+  const label = inp.parentElement.querySelector('.sep-date-label');
+  if(label) label.textContent = formatSepDate(inp.value);
+}
+
+function renderAcsSemanal(wk){
+  const c=document.getElementById('acsContent');
+  c.innerHTML='';
+  const card=buildSectionCard('🚿','GRIFOS — CONTROL SEMANAL', weekLabel(wk),'teal','badge-teal');
+  const body=card.querySelector('.section-body');
+
+  const t=document.createElement('table');t.className='data-table';
+  t.innerHTML=`<thead><tr>
+    <th>Nº</th><th>Nº INTERNO</th><th>GRIFO DE AGUA</th>
+    <th class="center">TURBIDEZ<br>AF (SEMANAL)</th>
+    <th class="center">TURBIDEZ<br>AC (SEMANAL)</th>
+    <th class="center">APERTURA<br>NO UTILIZADO</th>
+  </tr></thead><tbody></tbody>`;
+  const tb=t.querySelector('tbody');
+
+  let lastNi='';
+  ACS_SEMANAL.forEach((g,gi)=>{
+    if(g.ni!==lastNi){
+      const dateKey = makeKey('acs_sep_date', wk, g.ni);
+      const savedDate = getVal(dateKey) || wk;
+      const sr=document.createElement('tr');
+      sr.innerHTML=`<td colspan="6" class="row-sep">
+        <span class="sep-dot"></span>
+        <span class="sep-label">SEMANA &mdash; N&ordm; INTERNO ${g.ni}</span>
+        <span class="sep-date-wrap" style="position:relative">
+          <span class="sep-date-label" onclick="openDatePicker('${dateKey}','${savedDate}')">${formatSepDate(savedDate)}</span>
+          <button class="sep-edit-btn" title="Cambiar fecha" onclick="openDatePicker('${dateKey}','${savedDate}')">✏️</button>
+        </span>
+      </td>`;
+      tb.appendChild(sr);
+      lastNi=g.ni;
+    }
+    const tr=document.createElement('tr');
+    ['tf','tc','ap'].forEach(f=>{
+      const k=makeKey('acs_s',wk,g.n,f);
+      data[k]=data[k]||'';
+    });
+    tr.innerHTML=`
+      <td class="row-nint">${g.n}</td>
+      <td class="row-nint">${g.ni}</td>
+      <td class="row-loc">${g.loc}</td>
+      <td>${inputCell(makeKey('acs_s',wk,g.n,'tf'),'NTU')}</td>
+      <td>${inputCell(makeKey('acs_s',wk,g.n,'tc'),'NTU')}</td>
+      <td>${selectCell(makeKey('acs_s',wk,g.n,'ap'),['','SÍ','NO','N/A'])}</td>
+    `;
+    tb.appendChild(tr);
+  });
+  body.appendChild(t);
+  c.appendChild(card);
+  attachInputEvents(c);
+}
+
+function renderAcsMensual(mo,yr){
+  const c=document.getElementById('acsContent');c.innerHTML='';
+  const mesNombre=MONTHS[mo];
+  const mesData=ACS_MENSUAL.find(m=>m.mes===mesNombre);
+
+  const card=buildSectionCard('📊','GRIFOS — CONTROL MENSUAL',`${mesNombre} ${yr}`,'amber','badge-amber');
+  const body=card.querySelector('.section-body');
+
+  const t=document.createElement('table');t.className='data-table';
+  t.innerHTML=`<thead><tr>
+    <th>Nº</th><th>Nº INTERNO</th><th>GRIFO DE AGUA</th>
+    <th class="center">CLORO</th>
+    <th class="center">PH</th>
+    <th class="center">ESTADO<br>CONSERVACIÓN</th>
+    <th class="center">TEMP.<br>CALIENTE</th>
+    <th class="center">TEMP.<br>FRÍA</th>
+  </tr></thead><tbody></tbody>`;
+  const tb=t.querySelector('tbody');
+
+  if(mesData){
+    const hr=document.createElement('tr');
+    hr.innerHTML=`<td colspan="8" class="row-sep"><span class="sep-dot"></span> ${mesNombre} ${yr}</td>`;
+    tb.appendChild(hr);
+    mesData.items.forEach(g=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="row-nint">${g.n}</td>
+        <td class="row-nint">${g.ni}</td>
+        <td class="row-loc">${g.loc}</td>
+        <td>${inputCell(makeKey('acs_m',yr,mo,g.n,'cloro'),'mg/L')}</td>
+        <td>${inputCell(makeKey('acs_m',yr,mo,g.n,'ph'),'pH')}</td>
+        <td>${selectCell(makeKey('acs_m',yr,mo,g.n,'estado'),['','BUENO','REGULAR','MALO'])}</td>
+        <td>${inputCell(makeKey('acs_m',yr,mo,g.n,'tc'),'°C')}</td>
+        <td>${inputCell(makeKey('acs_m',yr,mo,g.n,'tf'),'°C')}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  } else {
+    tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">No hay grifos asignados para ${mesNombre}</td></tr>`;
+  }
+  body.appendChild(t);
+  c.appendChild(card);
+  attachInputEvents(c);
+}
+
+function renderAcsDepositos(yr){
+  const c=document.getElementById('acsContent');c.innerHTML='';
+
+  const card=buildSectionCard('🗄️','DEPÓSITOS — CONTROL MENSUAL',`Año ${yr}`,'blue','badge-blue');
+  const body=card.querySelector('.section-body');
+
+  const t=document.createElement('table');t.className='data-table';
+  t.innerHTML=`<thead><tr>
+    <th>MES</th><th>Nº INT.</th><th>DEPÓSITO</th>
+    <th class="center">CLORO</th>
+    <th class="center">PH</th>
+    <th class="center">TEMP.</th>
+    <th class="center">LIMPIEZA Y REVISIÓN BOQUILLA (Pistola Box Lavado)</th>
+  </tr></thead><tbody></tbody>`;
+  const tb=t.querySelector('tbody');
+
+  ACS_DEPOSITOS.forEach((dep,mi)=>{
+    const moIdx=MONTHS.indexOf(dep.mes);
+    const hr=document.createElement('tr');
+    hr.innerHTML=`<td colspan="7" class="row-sep"><span class="sep-dot"></span> ${dep.mes} ${yr}</td>`;
+    tb.appendChild(hr);
+    [
+      {n:'39',ni:'39',loc:'DEPÓSITO CONTRAINCENDIOS',  boquilla:false},
+      {n:'28',ni:'28',loc:'BOX LAVADO ISOTERMOS',       boquilla:true}
+    ].forEach(d=>{
+      const tr=document.createElement('tr');
+      const boquillaCell = d.boquilla
+        ? selectCell(makeKey('dep',yr,moIdx,d.n,'boquilla'),['','SÍ','NO','N/A'])
+        : '<div style="text-align:center;color:var(--text4);font-size:11px">—</div>';
+      tr.innerHTML=`
+        <td class="row-nint">${dep.mes}</td>
+        <td class="row-nint">${d.ni}</td>
+        <td class="row-loc">${d.loc}</td>
+        <td>${inputCell(makeKey('dep',yr,moIdx,d.n,'cloro'),'mg/L','cloro')}</td>
+        <td>${inputCell(makeKey('dep',yr,moIdx,d.n,'ph'),'pH','ph')}</td>
+        <td>${inputCell(makeKey('dep',yr,moIdx,d.n,'temp'),'°C','temperatura')}</td>
+        <td>${boquillaCell}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  });
+  body.appendChild(t);
+  c.appendChild(card);
+  attachInputEvents(c);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DIARIO
+// ═══════════════════════════════════════════════════════
+function setDiarioToday(){ diarioDate=new Date(); document.getElementById('diarioDate').value=localDateStr(diarioDate); renderDiario();}
+function updateDiarioDate(){ const v=document.getElementById('diarioDate').value; if(v){ const [y,m,d]=v.split('-').map(Number); diarioDate=new Date(y,m-1,d); } renderDiario();}
+function changeDiarioDay(delta){ diarioDate.setDate(diarioDate.getDate()+delta); document.getElementById('diarioDate').value=localDateStr(diarioDate); renderDiario();}
+
+function renderDiario(){
+  const dk=localDateStr(diarioDate);
+  const display=diarioDate.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('diarioDateDisplay').textContent=display;
+  // Also update the date input so it stays in sync
+  document.getElementById('diarioDate').value=localDateStr(diarioDate);
+
+  const c=document.getElementById('diarioContent');c.innerHTML='';
+
+  const card=buildSectionCard('📋','AGUA FRÍA SANITARIA — CONTROL DIARIO',display,'teal','badge-teal');
+  const body=card.querySelector('.section-body');
+
+  const t=document.createElement('table');t.className='data-table';
+  t.innerHTML=`<thead><tr>
+    <th>Nº</th>
+    <th>AGUA FRÍA SANITARIA</th>
+    <th class="center">PH<br><small style="font-size:9px">(DIARIO)</small></th>
+    <th class="center">CLORO<br><small style="font-size:9px">(DIARIO)</small></th>
+    <th class="center">TEMPERATURA<br><small style="font-size:9px">(SEMANAL) DEP. APORTE</small></th>
+  </tr></thead><tbody></tbody>`;
+  const tb=t.querySelector('tbody');
+
+  DIARIO_ITEMS.forEach(it=>{
+    const tr=document.createElement('tr');
+    const isWeekly=(diarioDate.getDay()===1||diarioDate.getDay()===0); // lun/dom
+    tr.innerHTML=`
+      <td class="row-nint">${it.n}</td>
+      <td class="row-loc">${it.loc}</td>
+      <td>${inputCell(makeKey('dia',dk,it.n,'ph'),'pH','ph')}</td>
+      <td>${inputCell(makeKey('dia',dk,it.n,'cloro'),'mg/L','cloro')}</td>
+      <td>${isWeekly?inputCell(makeKey('dia',dk,it.n,'temp'),'°C'):'<div style="text-align:center;color:var(--text4);font-size:11px">— semanal —</div>'}</td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  // observaciones
+  const obsRow=document.createElement('tr');
+  obsRow.innerHTML=`<td colspan="5" style="padding:12px 14px">
+    <div style="font-family:monospace,monospace;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">OBSERVACIONES DEL DÍA</div>
+    <textarea class="cell-input" style="width:100%;min-height:60px;text-align:left;resize:vertical;font-family:sans-serif,sans-serif;font-size:13px;padding:8px"
+      placeholder="Anotar cualquier incidencia, anomalía o acción correctiva..."
+      onchange="setVal('${makeKey('dia',dk,'obs')}',this.value)">${getVal(makeKey('dia',dk,'obs'))}</textarea>
+  </td>`;
+  tb.appendChild(obsRow);
+
+  body.appendChild(t);
+  c.appendChild(card);
+  attachInputEvents(c);
+  updateDiarioStats(dk);
+}
+
+function updateDiarioStats(dk){
+  const keys=DIARIO_ITEMS.flatMap(it=>[makeKey('dia',dk,it.n,'ph'),makeKey('dia',dk,it.n,'cloro')]);
+  const total=keys.length;
+  const done=keys.filter(k=>getVal(k)).length;
+  const pend=total-done;
+  document.getElementById('diarTotal').textContent=total;
+  document.getElementById('diarDone').textContent=done;
+  document.getElementById('diarPend').textContent=pend;
+  document.getElementById('diarPct').textContent=total?Math.round(done/total*100)+'%':'0%';
+}
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS — BUILD UI
+// ═══════════════════════════════════════════════════════
+function inputCell(key,placeholder,field){
+  const v=(getVal(key)||'').replace(/"/g,'&quot;');
+  return `<input type="text" class="cell-input" placeholder="${placeholder||''}" value="${v}" data-key="${key}" data-field="${field||''}" inputmode="decimal" onchange="setVal(this.dataset.key,this.value);colorInput(this,this.dataset.field);saveData();" oninput="colorInput(this,this.dataset.field)">`;
+}
+function selectCell(key,opts){
+  const v=getVal(key);
+  const options=opts.map(o=>`<option value="${o}"${v===o?' selected':''}>${o||'—'}</option>`).join('');
+  return `<select class="cell-input" data-key="${key}" onchange="setVal(this.dataset.key,this.value)">${options}</select>`;
+}
+
+function buildSectionCard(icon,title,sub,iconClass,badgeClass){
+  const card=document.createElement('div');
+  card.className='section-card';
+  card.innerHTML=`
+    <div class="section-head" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="sec-icon ${iconClass}">${icon}</div>
+      <div><div class="sec-title">${title}</div><div class="sec-sub">${sub}</div></div>
+      <span class="sec-badge ${badgeClass}">${MONTHS[acsDate.getMonth()]} ${acsDate.getFullYear()}</span>
+      <span class="sec-toggle">▼</span>
+    </div>
+    <div class="section-body" style="max-height:9999px"><div style="overflow-x:auto"></div></div>
+  `;
+  // move content into scrollable wrapper
+  const wrap=card.querySelector('.section-body div');
+  card.querySelector('.section-body')._wrap=wrap;
+  // reassign appendChild to go into wrap
+  const sb=card.querySelector('.section-body');
+  sb._origAppend=sb.appendChild.bind(sb);
+  sb.appendChild=el=>wrap.appendChild(el);
+  return card;
+}
+
+function attachInputEvents(container){
+  container.querySelectorAll('.cell-input[data-field]').forEach(inp=>{
+    colorInput(inp, inp.dataset.field);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  EVAPORATIVOS MENSUAL
+// ═══════════════════════════════════════════════════════
+let evapMonth = new Date().getMonth();
+let evapYear  = new Date().getFullYear();
+
+function renderEvap(){
+  evapYear  = parseInt(document.getElementById('evapYear').value)||2026;
+
+  // Pills de mes
+  const pills = document.getElementById('evapMonthPills');
+  pills.innerHTML = MONTHS.map((m,i)=>
+    `<div class="month-pill${i===evapMonth?' active':''}" onclick="evapMonth=${i};renderEvap()">${MONTHS_SHORT[i]}</div>`
+  ).join('');
+
+  const c = document.getElementById('evapContent');
+  c.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'section-card';
+  card.innerHTML = `
+    <div class="section-head" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="sec-icon blue">🔵</div>
+      <div>
+        <div class="sec-title">EVAPORATIVOS MENSUAL — ${MONTHS[evapMonth]} ${evapYear}</div>
+        <div class="sec-sub">BIOCIDAD · PH · TEMPERATURA · TURBIDEZ · 26 EVAPORATIVOS</div>
+      </div>
+      <span class="sec-badge badge-blue">${EVAP_ITEMS.length} unidades</span>
+      <span class="sec-toggle">▼</span>
+    </div>
+    <div class="section-body" style="max-height:9999px;overflow-x:auto"></div>`;
+
+  const body = card.querySelector('.section-body');
+  const t = document.createElement('table');
+  t.className = 'data-table';
+  t.innerHTML = `<thead><tr>
+    <th>Nº</th><th>EVAPORATIVO</th>
+    <th class="center">BIOCIDAD</th>
+    <th class="center">PH</th>
+    <th class="center">TEMPERATURA (°C)</th>
+    <th class="center">TURBIDEZ</th>
+  </tr></thead><tbody></tbody>`;
+  const tb = t.querySelector('tbody');
+
+  EVAP_ITEMS.forEach((ev,i)=>{
+    const alt = i%2===0;
+    const tr = document.createElement('tr');
+    if(alt) tr.style.background='var(--surface2)';
+    tr.innerHTML = `
+      <td class="row-nint">${ev.n}</td>
+      <td class="row-loc">${ev.loc}</td>
+      <td>${inputCell(makeKey('evap',evapYear,evapMonth,ev.n,'biocidad'),'','')}</td>
+      <td>${inputCell(makeKey('evap',evapYear,evapMonth,ev.n,'ph'),'pH','ph')}</td>
+      <td>${inputCell(makeKey('evap',evapYear,evapMonth,ev.n,'temp'),'°C','temperatura')}</td>
+      <td>${inputCell(makeKey('evap',evapYear,evapMonth,ev.n,'turbidez'),'NTU','')}</td>
+    `;
+    tb.appendChild(tr);
+  });
+  body.appendChild(t);
+  c.appendChild(card);
+  attachInputEvents(c);
+  updateEvapStats();
+}
+
+function updateEvapStats(){
+  const fields=['biocidad','ph','temp','turbidez'];
+  const total = EVAP_ITEMS.length * fields.length;
+  const done  = EVAP_ITEMS.reduce((acc,ev)=>
+    acc + fields.filter(f=>getVal(makeKey('evap',evapYear,evapMonth,ev.n,f))).length, 0);
+  const pend  = total - done;
+  document.getElementById('evapTotal').textContent = total;
+  document.getElementById('evapDone').textContent  = done;
+  document.getElementById('evapPend').textContent  = pend;
+  document.getElementById('evapPct').textContent   = total?Math.round(done/total*100)+'%':'0%';
+}
+
+// ═══════════════════════════════════════════════════════
+//  AGUA POTABLE
+// ═══════════════════════════════════════════════════════
+let potableDate = new Date();
+
+function setPotableToday(){
+  potableDate = new Date();
+  document.getElementById('potableDate').value = localDateStr(potableDate);
+  renderPotable();
+}
+function updatePotableDate(){
+  const v = document.getElementById('potableDate').value;
+  if(v){ const [y,m,d]=v.split('-').map(Number); potableDate=new Date(y,m-1,d); }
+  renderPotable();
+}
+function changePotableDay(delta){
+  potableDate.setDate(potableDate.getDate()+delta);
+  document.getElementById('potableDate').value = localDateStr(potableDate);
+  renderPotable();
+}
+
+function renderPotable(){
+  const wk    = getWeekKey(potableDate);
+  const grifo = getPotableGrifoSemana(wk);
+  const display = potableDate.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const wlabel  = weekLabel(wk);
+
+  document.getElementById('potableDateDisplay').textContent = display;
+  document.getElementById('potableDate').value = localDateStr(potableDate);
+
+  const cont = document.getElementById('potableContent');
+  cont.innerHTML = '';
+
+  // ── Selector de semana del calendario ─────────────────────────────
+  const selWrap = document.createElement('div');
+  selWrap.style.cssText='padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+
+  const selLabel = document.createElement('span');
+  selLabel.style.cssText='font-family:"DM Mono",monospace;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;white-space:nowrap';
+  selLabel.textContent = 'SEMANA DEL AÑO:';
+  selWrap.appendChild(selLabel);
+
+  const sel = document.createElement('select');
+  sel.className = 'date-input';
+  sel.style.cssText = 'flex:1;min-width:200px;font-size:12px';
+  POTABLE_CALENDARIO.forEach(entry => {
+    const opt = document.createElement('option');
+    opt.value = entry.lunes;
+    const [y2,m2,d2] = entry.lunes.split('-').map(Number);
+    const lunDt = new Date(y2,m2-1,d2);
+    const domDt = new Date(y2,m2-1,d2+6);
+    const fmt   = dt => dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+    opt.textContent = fmt(lunDt)+' – '+fmt(domDt)+' '+y2+' · '+entry.grifo;
+    opt.selected = (entry.lunes === wk);
+    sel.appendChild(opt);
+  });
+  sel.onchange = function(){
+    const [y2,m2,d2] = this.value.split('-').map(Number);
+    potableDate = new Date(y2,m2-1,d2);
+    document.getElementById('potableDate').value = localDateStr(potableDate);
+    renderPotable();
+  };
+  selWrap.appendChild(sel);
+  cont.appendChild(selWrap);
+
+  // ── Card principal ─────────────────────────────────────────────────
+  const card = document.createElement('div');
+  card.className = 'section-card';
+  card.innerHTML = '<div class="section-head" onclick="this.parentElement.classList.toggle(\'collapsed\')">'
+    +'<div class="sec-icon teal">💧</div>'
+    +'<div>'
+    +'<div class="sec-title">REGISTRO CONTROL AGUA POTABLE — SEMANAL</div>'
+    +'<div class="sec-sub">Semana '+wlabel+' · Nº Sem. '+grifo.nsem+' · Ref: RG.ALM.03-1</div>'
+    +'</div>'
+    +'<span class="sec-badge badge-teal">1 grifo/semana</span>'
+    +'<span class="sec-toggle">▼</span>'
+    +'</div>'
+    +'<div class="section-body" style="max-height:9999px;overflow-x:auto"></div>';
+  const body = card.querySelector('.section-body');
+
+  // Info box grifo asignado
+  const infoBox = document.createElement('div');
+  infoBox.style.cssText='padding:12px 16px;background:var(--blue-light);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px';
+  infoBox.innerHTML='<div style="font-size:22px">🚰</div>'
+    +'<div>'
+    +'<div style="font-family:Sora,sans-serif;font-size:13px;font-weight:700;color:var(--navy)">Semana '+grifo.nsem+' — Grifo asignado: '+grifo.grifo+'</div>'
+    +'<div style="font-size:12px;color:var(--text2);margin-top:2px">'+wlabel+'</div>'
+    +'</div>';
+  body.appendChild(infoBox);
+
+  const t = document.createElement('table');
+  t.className = 'data-table';
+  t.innerHTML = '<thead><tr>'
+    +'<th>Grifo / Punto de Control</th>'
+    +'<th class="center">COLOR</th>'
+    +'<th class="center">OLOR</th>'
+    +'<th class="center">SABOR</th>'
+    +'<th class="center">CLORO LIBRE (≥0.2 mg/L)</th>'
+    +'<th class="center">RESULTADO (S/N)</th>'
+    +'<th class="center">FIRMA</th>'
+    +'<th class="center">INCIDENCIA</th>'
+    +'</tr></thead><tbody></tbody>';
+  const tb = t.querySelector('tbody');
+
+  const mkp = f => makeKey('pot', wk, grifo.grifo.replace(/\s/g,'_'), f);
+
+  const selCell = (f, opts) => {
+    const v = getVal(mkp(f));
+    let style = '';
+    if(f==='result'){
+      if(v==='S') style='color:var(--green);font-weight:700;background:var(--green-light)';
+      else if(v==='N') style='color:var(--red);font-weight:700;background:var(--red-light)';
+    }
+    if((f==='color'||f==='olor'||f==='sabor')&&v){
+      if(v==='CORRECTO') style='color:var(--green);background:var(--green-light)';
+      else if(v==='INCORRECTO') style='color:var(--red);background:var(--red-light)';
+    }
+    if(f==='incid'&&v==='X') style='color:var(--red);font-weight:700;background:var(--red-light)';
+    const os = opts.map(o=>'<option value="'+o+'"'+(v===o?' selected':'')+'>'+( o||'—')+'</option>').join('');
+    return '<select class="cell-input" style="'+style+'" data-key="'+mkp(f)+'" onchange="setVal(this.dataset.key,this.value)">' + os + '</select>';
+  };
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td class="row-loc">'+grifo.grifo+'</td>'
+    +'<td>'+selCell('color',['','CORRECTO','INCORRECTO'])+'</td>'
+    +'<td>'+selCell('olor', ['','CORRECTO','INCORRECTO'])+'</td>'
+    +'<td>'+selCell('sabor',['','CORRECTO','INCORRECTO'])+'</td>'
+    +'<td>'+inputCell(mkp('cloro'),'mg/L','cloro')+'</td>'
+    +'<td>'+selCell('result',['','S','N'])+'</td>'
+    +'<td>'+inputCell(mkp('firma'),'Nombre','')+'</td>'
+    +'<td>'+selCell('incid',['','—','X'])+'</td>';
+  tb.appendChild(tr);
+
+  // Fila observaciones
+  const obsK = makeKey('pot', wk, grifo.grifo.replace(/\s/g,'_'), 'obs');
+  const obsRow = document.createElement('tr');
+  obsRow.innerHTML = '<td colspan="8" style="padding:10px 14px">'
+    +'<div style="font-family:monospace,monospace;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">OBSERVACIONES</div>'
+    +'<textarea class="cell-input" style="width:100%;min-height:50px;text-align:left;resize:vertical;font-family:sans-serif,sans-serif;font-size:13px;padding:8px" '
+    +'placeholder="Anotar cualquier incidencia o anomalía..." '
+    +'onchange="setVal(\'"+ obsK +"\',this.value)">'+getVal(obsK)+'</textarea>'
+    +'</td>';
+  tb.appendChild(obsRow);
+
+  body.appendChild(t);
+  cont.appendChild(card);
+  attachInputEvents(cont);
+  updatePotableStats(wk);
+}
+
+function updatePotableStats(wk){
+  const grifo = getPotableGrifoSemana(wk);
+  const fields = ['color','olor','sabor','cloro','result'];
+  const keys   = fields.map(f=>makeKey('pot',wk,grifo.ni,f));
+  const total  = keys.length;
+  const done   = keys.filter(k=>getVal(k)).length;
+  document.getElementById('potTotal').textContent = total;
+  document.getElementById('potDone').textContent  = done;
+  document.getElementById('potPend').textContent  = total-done;
+  document.getElementById('potPct').textContent   = total?Math.round(done/total*100)+'%':'0%';
+}
+
+function updatePotableStats(wk){
+  // wk = lunes de la semana
+  const grifo = getPotableGrifoSemana(wk||getWeekKey(potableDate));
+  const gKey  = grifo.grifo.replace(/\s+/g,'_');
+  const fields = ['color','olor','sabor','cloro','result'];
+  const keys   = fields.map(f=>makeKey('pot',wk||getWeekKey(potableDate),gKey,f));
+  const total  = keys.length;
+  const done   = keys.filter(k=>getVal(k)).length;
+  document.getElementById('potTotal').textContent = total;
+  document.getElementById('potDone').textContent  = done;
+  document.getElementById('potPend').textContent  = total-done;
+  document.getElementById('potPct').textContent   = total?Math.round(done/total*100)+'%':'0%';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONFIG PIN
+// ═══════════════════════════════════════════════════════
+const CFG_ACCESS_PIN = '1234'; // PIN específico para Configuración
+let cfgPinBuffer = '';
+let _cfgUnlocked = false;
+
+function cfgPinPress(d){
+  if(cfgPinBuffer.length>=4) return;
+  cfgPinBuffer += d;
+  updateCfgPinDots();
+  if(cfgPinBuffer.length===4) setTimeout(checkCfgPin,150);
+}
+function cfgPinClear(){
+  cfgPinBuffer = cfgPinBuffer.slice(0,-1);
+  updateCfgPinDots();
+  document.getElementById('cfgPinError').textContent='';
+}
+function updateCfgPinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('cpd'+i);
+    if(d){ d.classList.toggle('filled',i<cfgPinBuffer.length); d.classList.remove('error'); }
+  }
+}
+function checkCfgPin(){
+  const current = (cfg && cfg.cfgPin) ? cfg.cfgPin : CFG_ACCESS_PIN;
+  if(cfgPinBuffer===current){
+    _cfgUnlocked=true;
+    closeOverlay('configPinOverlay');
+    // Switch to config tab
+    const cfgTabBtn = document.querySelector('[onclick*="config"]');
+    _doSwitchTab('config', cfgTabBtn);
+    showToast('✅ Acceso a configuración autorizado');
+  } else {
+    for(let i=0;i<4;i++){const d=document.getElementById('cpd'+i);if(d)d.classList.add('error');}
+    document.getElementById('cfgPinError').textContent='❌ PIN incorrecto';
+    setTimeout(()=>{cfgPinBuffer='';updateCfgPinDots();document.getElementById('cfgPinError').textContent='';},1200);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════
+let _charts = {};
+
+function destroyChart(id){
+  if(_charts[id]){ try{_charts[id].destroy();}catch(e){} delete _charts[id]; }
+}
+
+function renderDashboard(){
+  const yr = ppclYear;
+  const mo = ppclMonth;
+  const mesNombre = MONTHS[mo];
+
+  document.getElementById('dashSubtitle').textContent =
+    'Resumen visual PPCL · '+mesNombre+' '+yr;
+  document.getElementById('dashCondSubtitle').textContent =
+    'Evolución del pH — '+mesNombre+' '+yr;
+
+  // ── KPIs ──────────────────────────────────────────────
+  const days   = new Date(yr,mo+1,0).getDate();
+  const allData = [];
+
+  // Condensadores datos del mes
+  let condDone=0, condTotal=0, condAlerts=[];
+  for(let d=1;d<=days;d++){
+    [1,2].forEach(cn=>{
+      ['biocidad','temperatura','ph'].forEach(f=>{
+        condTotal++;
+        const v=getVal(makeKey('ppcl',yr,mo,cn,d,f));
+        if(v) condDone++;
+        if(f==='ph'&&v){
+          const n=parseFloat(v);
+          if(!isNaN(n)&&(n<6.5||n>8.5)) condAlerts.push({sec:'Condensador '+cn,dia:d,campo:'PH',val:v,level:'red'});
+          else if(!isNaN(n)&&(n<7.0||n>8.0)) condAlerts.push({sec:'Condensador '+cn,dia:d,campo:'PH',val:v,level:'amber'});
+        }
+        if(f==='temperatura'&&v){
+          const n=parseFloat(v);
+          if(!isNaN(n)&&n>35) condAlerts.push({sec:'Condensador '+cn,dia:d,campo:'Temp',val:v+'°C',level:'red'});
+          else if(!isNaN(n)&&n>25) condAlerts.push({sec:'Condensador '+cn,dia:d,campo:'Temp',val:v+'°C',level:'amber'});
+        }
+      });
+    });
+  }
+
+  // ACS Semanal semana actual
+  const wk=getWeekKey(acsDate);
+  let acsDone=0, acsTotal=0;
+  ACS_SEMANAL.forEach(g=>{
+    ['tf','tc'].forEach(f=>{acsTotal++;if(getVal(makeKey('acs_s',wk,g.n,f)))acsDone++;});
+  });
+
+  // Evaporativos mes
+  let evapDone=0, evapTotal=0;
+  EVAP_ITEMS.forEach(ev=>{
+    ['biocidad','ph','temp','turbidez'].forEach(f=>{
+      evapTotal++;if(getVal(makeKey('evap',yr,mo,ev.n,f)))evapDone++;
+    });
+  });
+
+  // Diario hoy
+  const dk=localDateStr(diarioDate);
+  let diarioDone=0;
+  DIARIO_ITEMS.forEach(it=>{
+    if(getVal(makeKey('dia',dk,it.n,'ph'))) diarioDone++;
+    if(getVal(makeKey('dia',dk,it.n,'cloro'))) diarioDone++;
+  });
+
+  const pctCond  = condTotal  ? Math.round(condDone/condTotal*100)   : 0;
+  const pctAcs   = acsTotal   ? Math.round(acsDone/acsTotal*100)     : 0;
+  const pctEvap  = evapTotal  ? Math.round(evapDone/evapTotal*100)   : 0;
+  const pctGlobal= (condTotal+acsTotal+evapTotal) ?
+    Math.round((condDone+acsDone+evapDone)/(condTotal+acsTotal+evapTotal)*100) : 0;
+
+  // Render KPI cards
+  const kpiEl = document.getElementById('dashKpis');
+  const kpis = [
+    {label:'Cumplimiento Global', val:pctGlobal+'%', icon:'🎯', color:'blue',
+     trend:pctGlobal>=80?'ok':pctGlobal>=50?'ok':'down',
+     trendTxt:pctGlobal>=80?'✅ Buen ritmo':'⚠️ Mejorar'},
+    {label:'Condensadores '+mesNombre, val:pctCond+'%', icon:'🌡️', color:'teal',
+     trend:'ok', trendTxt:condDone+'/'+condTotal+' registros'},
+    {label:'ACS Semanal', val:pctAcs+'%', icon:'🚿', color:'green',
+     trend:pctAcs===100?'ok':'ok', trendTxt:acsDone+'/'+acsTotal+' grifos'},
+    {label:'Evaporativos', val:pctEvap+'%', icon:'🔵', color:'amber',
+     trend:'ok', trendTxt:evapDone+'/'+evapTotal+' registros'},
+    {label:'Alertas activas', val:condAlerts.filter(a=>a.level==='red').length,
+     icon:'⚠️', color:'red', trend:condAlerts.length>0?'down':'ok',
+     trendTxt:condAlerts.length+' valores fuera de rango'},
+    {label:'Días con diario', val:function(){
+      let cnt=0;
+      for(let d=1;d<=days;d++){
+        const dk2=yr+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        if(getVal(makeKey('dia',dk2,DIARIO_ITEMS[0].n,'ph'))) cnt++;
+      }
+      return cnt;
+    }(), icon:'📋', color:'blue', trend:'ok', trendTxt:'de '+days+' días del mes'},
+  ];
+  kpiEl.innerHTML = kpis.map(k=>`
+    <div class="kpi-card ${k.color}">
+      <div class="kpi-num">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-trend ${k.trend}">${k.trendTxt}</div>
+      <div class="kpi-icon">${k.icon}</div>
+    </div>`).join('');
+
+  // ── Gráfico 1: Progreso por sección ──────────────────
+  destroyChart('progress');
+  const ctxProg = document.getElementById('chartProgress');
+  if(ctxProg && typeof Chart !== 'undefined'){
+    _charts['progress'] = new Chart(ctxProg.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:['Condensadores','ACS Semanal','Evaporativos','ACS Mensual','Diario'],
+        datasets:[{
+          label:'% Completado',
+          data:[pctCond, pctAcs, pctEvap,
+            (function(){let d=0,t=0;ACS_MENSUAL.forEach(mes=>{const mi=MONTHS.indexOf(mes.mes);mes.items.forEach(g=>{['cloro','ph','estado','tc','tf'].forEach(f=>{t++;if(getVal(makeKey('acs_m',yr,mi,g.n,f)))d++;});});});return t?Math.round(d/t*100):0;})(),
+            Math.round(diarioDone/Math.max(1,DIARIO_ITEMS.length*2)*100)
+          ],
+          backgroundColor:[
+            'rgba(37,137,199,0.8)','rgba(13,138,122,0.8)',
+            'rgba(29,111,164,0.8)','rgba(201,123,0,0.8)','rgba(39,174,96,0.8)'
+          ],
+          borderRadius:6, borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'%'}}},
+        scales:{
+          y:{min:0,max:100,grid:{color:'rgba(0,0,0,0.05)'},
+            ticks:{callback:v=>v+'%',font:{size:11}}},
+          x:{grid:{display:false},ticks:{font:{size:11}}}
+        }
+      }
+    });
+  }
+
+  // ── Gráfico 2: PH Condensadores diario ───────────────
+  destroyChart('ph');
+  const ctxPh = document.getElementById('chartPh');
+  if(ctxPh && typeof Chart !== 'undefined'){
+    const labels=[],ph1=[],ph2=[],colors1=[],colors2=[];
+    for(let d=1;d<=days;d++){
+      const v1=parseFloat(getVal(makeKey('ppcl',yr,mo,1,d,'ph'))||'');
+      const v2=parseFloat(getVal(makeKey('ppcl',yr,mo,2,d,'ph'))||'');
+      labels.push(d);
+      ph1.push(isNaN(v1)?null:v1);
+      ph2.push(isNaN(v2)?null:v2);
+      colors1.push(isNaN(v1)?'rgba(0,0,0,0)':v1>=7&&v1<=8?'rgba(39,174,96,0.9)':v1>=6.5&&v1<=8.5?'rgba(201,123,0,0.9)':'rgba(231,76,60,0.9)');
+      colors2.push(isNaN(v2)?'rgba(0,0,0,0)':v2>=7&&v2<=8?'rgba(13,138,122,0.9)':v2>=6.5&&v2<=8.5?'rgba(201,123,0,0.9)':'rgba(231,76,60,0.9)');
+    }
+    _charts['ph'] = new Chart(ctxPh.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'Condensador 1',data:ph1,backgroundColor:colors1,borderRadius:3,barPercentage:0.6},
+          {label:'Condensador 2',data:ph2,backgroundColor:colors2,borderRadius:3,barPercentage:0.6}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{position:'top',labels:{font:{size:11}}},
+          annotation:{annotations:{
+            lineOk:{type:'box',yMin:7,yMax:8,backgroundColor:'rgba(39,174,96,0.06)',borderColor:'rgba(39,174,96,0.3)',borderWidth:1}
+          }}
+        },
+        scales:{
+          y:{min:5.5,max:9.5,grid:{color:'rgba(0,0,0,0.05)'},
+            ticks:{font:{size:10}},
+            title:{display:true,text:'pH',font:{size:11}}},
+          x:{grid:{display:false},ticks:{font:{size:9}},title:{display:true,text:'Día',font:{size:11}}}
+        }
+      }
+    });
+  }
+
+  // ── Gráfico 3: Temperatura Condensadores ─────────────
+  destroyChart('temp');
+  const ctxT = document.getElementById('chartTemp');
+  if(ctxT && typeof Chart !== 'undefined'){
+    const t1=[],t2=[];
+    for(let d=1;d<=days;d++){
+      t1.push(parseFloat(getVal(makeKey('ppcl',yr,mo,1,d,'temperatura'))||'')||null);
+      t2.push(parseFloat(getVal(makeKey('ppcl',yr,mo,2,d,'temperatura'))||'')||null);
+    }
+    _charts['temp'] = new Chart(ctxT.getContext('2d'),{
+      type:'line',
+      data:{
+        labels:Array.from({length:days},(_,i)=>i+1),
+        datasets:[
+          {label:'Cond. 1',data:t1,borderColor:'rgba(37,137,199,1)',
+           backgroundColor:'rgba(37,137,199,0.08)',tension:0.3,fill:true,
+           pointRadius:3,pointBackgroundColor:'rgba(37,137,199,1)',spanGaps:true},
+          {label:'Cond. 2',data:t2,borderColor:'rgba(13,138,122,1)',
+           backgroundColor:'rgba(13,138,122,0.08)',tension:0.3,fill:true,
+           pointRadius:3,pointBackgroundColor:'rgba(13,138,122,1)',spanGaps:true}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+        scales:{
+          y:{grid:{color:'rgba(0,0,0,0.05)'},
+            ticks:{font:{size:10},callback:v=>v+'°C'},
+            title:{display:true,text:'Temperatura (°C)',font:{size:11}}},
+          x:{grid:{display:false},ticks:{font:{size:9}},title:{display:true,text:'Día',font:{size:11}}}
+        }
+      }
+    });
+  }
+
+  // ── Gráfico 4: Evaporativos PH ────────────────────────
+  destroyChart('evapph');
+  const ctxEP = document.getElementById('chartEvapPh');
+  if(ctxEP && typeof Chart !== 'undefined'){
+    const evLabels=[], evPh=[], evColors=[];
+    EVAP_ITEMS.forEach(ev=>{
+      const v=parseFloat(getVal(makeKey('evap',yr,mo,ev.n,'ph'))||'');
+      evLabels.push('Ev.'+ev.n);
+      evPh.push(isNaN(v)?null:v);
+      evColors.push(isNaN(v)?'rgba(180,180,180,0.3)':
+        v>=7&&v<=8?'rgba(39,174,96,0.8)':
+        v>=6.5&&v<=8.5?'rgba(201,123,0,0.8)':'rgba(231,76,60,0.8)');
+    });
+    _charts['evapph'] = new Chart(ctxEP.getContext('2d'),{
+      type:'bar',
+      data:{labels:evLabels,datasets:[{
+        label:'PH',data:evPh,backgroundColor:evColors,borderRadius:4,barPercentage:0.7
+      }]},
+      options:{
+        responsive:true,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>ctx.parsed.y!==null?'pH: '+ctx.parsed.y:'Sin dato'}}},
+        scales:{
+          y:{min:5,max:10,grid:{color:'rgba(0,0,0,0.05)'},
+            ticks:{font:{size:10}},title:{display:true,text:'pH',font:{size:11}}},
+          x:{grid:{display:false},ticks:{font:{size:8},maxRotation:45}}
+        }
+      }
+    });
+  }
+
+  // ── Gráfico 5: Agua Potable resultados ───────────────
+  destroyChart('potable');
+  const ctxPot = document.getElementById('chartPotable');
+  if(ctxPot && typeof Chart !== 'undefined'){
+    const potLabels=[],potOk=[],potFail=[];
+    POTABLE_CALENDARIO.forEach(p=>{
+      const wkP=p.lunes;
+      const key=p.grifo.replace(/\s/g,'_');
+      const res=getVal(makeKey('pot',wkP,key,'result'));
+      const cloro=parseFloat(getVal(makeKey('pot',wkP,key,'cloro'))||'');
+      if(res){
+        const [y2,m2,d2]=wkP.split('-').map(Number);
+        const lbl=new Date(y2,m2-1,d2).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+        potLabels.push(lbl);
+        potOk.push(res==='S'?1:0);
+        potFail.push(res==='N'?1:0);
+      }
+    });
+    if(potLabels.length>0){
+      _charts['potable'] = new Chart(ctxPot.getContext('2d'),{
+        type:'bar',
+        data:{
+          labels:potLabels,
+          datasets:[
+            {label:'Correcto (S)',data:potOk,backgroundColor:'rgba(39,174,96,0.8)',borderRadius:4},
+            {label:'Incorrecto (N)',data:potFail,backgroundColor:'rgba(231,76,60,0.8)',borderRadius:4}
+          ]
+        },
+        options:{
+          responsive:true,indexAxis:'y',
+          plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+          scales:{
+            x:{grid:{color:'rgba(0,0,0,0.05)'},stacked:true,max:1,ticks:{display:false}},
+            y:{grid:{display:false},stacked:true,ticks:{font:{size:10}}}
+          }
+        }
+      });
+    } else {
+      ctxPot.parentElement.innerHTML += '<div style="text-align:center;color:var(--text4);font-family:monospace;font-size:12px;padding:20px">Sin registros de agua potable aún</div>';
+    }
+  }
+
+  // ── Tabla últimos registros ───────────────────────────
+  const recentBody = document.getElementById('dashRecentBody');
+  if(recentBody){
+    const recents=[];
+    for(let d=days;d>=1&&recents.length<10;d--){
+      [1,2].forEach(cn=>{
+        const ph=getVal(makeKey('ppcl',yr,mo,cn,d,'ph'));
+        const t=getVal(makeKey('ppcl',yr,mo,cn,d,'temperatura'));
+        if(ph) recents.push({fecha:'Día '+d,sec:'Cond. '+cn,punto:'PH',val:ph,
+          ok:parseFloat(ph)>=7&&parseFloat(ph)<=8});
+        if(t) recents.push({fecha:'Día '+d,sec:'Cond. '+cn,punto:'Temp',val:t+'°C',
+          ok:parseFloat(t)<=25});
+      });
+    }
+    recentBody.innerHTML = recents.slice(0,10).map(r=>`
+      <tr>
+        <td class="row-nint">${r.fecha}</td>
+        <td class="row-loc">${r.sec}</td>
+        <td style="font-size:12px">${r.punto}</td>
+        <td style="text-align:center;font-family:monospace;font-size:12px;
+          color:${r.ok?'var(--green)':'var(--red)'};font-weight:600">${r.val}</td>
+        <td style="text-align:center">
+          <span style="font-size:13px">${r.ok?'✅':'⚠️'}</span>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text4);padding:20px;font-family:monospace;font-size:12px">Sin registros este mes</td></tr>';
+  }
+
+  // ── Alertas ───────────────────────────────────────────
+  const alertsEl = document.getElementById('dashAlerts');
+  const badge    = document.getElementById('dashAlertBadge');
+  const redAlerts = condAlerts.filter(a=>a.level==='red');
+  if(badge) badge.textContent = condAlerts.length;
+  if(alertsEl){
+    if(condAlerts.length===0){
+      alertsEl.innerHTML='<div style="text-align:center;color:var(--green);font-family:monospace;font-size:12px;padding:20px">✅ Sin alertas activas — todos los valores dentro del rango</div>';
+    } else {
+      alertsEl.innerHTML = condAlerts.map(a=>`
+        <div class="alert-item ${a.level}">
+          <span class="alert-icon">${a.level==='red'?'🔴':'🟡'}</span>
+          <div>
+            <div class="alert-text"><strong>${a.sec}</strong> — ${a.campo}: <strong>${a.val}</strong></div>
+            <div class="alert-meta">Día ${a.dia} · ${MONTHS[mo]} ${yr} · ${a.level==='red'?'FUERA DE RANGO':'Advertencia'}</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  GLOBAL STATS
+// ═══════════════════════════════════════════════════════
+function updateAllStats(){
+  updatePPCLStats();
+  const dk=localDateStr(diarioDate);
+  updateDiarioStats(dk);
+  updateEvapStats();
+  const pdq=localDateStr(potableDate);
+  updatePotableStats(pdq);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SAVE / EXPORT
+// ═══════════════════════════════════════════════════════
+function saveAll(){
+  const btn = document.getElementById('saveBtn');
+  if(btn){ btn.classList.remove('flashing'); void btn.offsetWidth; btn.classList.add('flashing'); setTimeout(()=>btn.classList.remove('flashing'),800); }
+  saveData();
+  showToast('💾 Guardado — sincronizando…');
+}
+
+// ═══════════════════════════════════════════════════════
+//  BUILD COMPLETE REPORT — todas las secciones y todos los meses
+// ═══════════════════════════════════════════════════════
+function buildReportText(){
+  const now = new Date();
+  const yr  = ppclYear;
+  const wk  = getWeekKey(acsDate);
+  const sep  = '='.repeat(70);
+  const sep2 = '-'.repeat(70);
+  const L = [];
+
+  const pad = (v,n) => String(v==null||v===''?'—':v).padEnd(n,' ').substring(0,n);
+  const padL= (v,n) => String(v==null||v===''?'—':v).padStart(n,' ').substring(0,n);
+
+  // ── Cabecera ──────────────────────────────────────────
+  L.push(sep);
+  L.push('  PPCL LEGIONELLA — ALMACÉN ' + yr);
+  L.push('  Programa de Prevención y Control de Legionella');
+  L.push('  Empresa: DIAGROUP');
+  L.push(sep);
+  L.push('Fecha emisión : ' + now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
+  L.push('Hora          : ' + now.toLocaleTimeString('es-ES'));
+  L.push('Semana activa : ' + weekLabel(wk));
+  L.push('Destinatario  : juanantonio.carmona@diagroup.com');
+  L.push('');
+
+  // ── Resumen global ────────────────────────────────────
+  // Contar desde localStorage directamente (no del DOM, que solo muestra lo visible)
+  let totalCells = 0, doneCells = 0;
+  Object.keys(data).forEach(k => {
+    if(k.startsWith('ppcl') || k.startsWith('acs_') || k.startsWith('dep') || k.startsWith('dia')){
+      if(!k.includes('sep_date') && !k.includes('obs')){
+        totalCells++;
+        if(data[k] && data[k].trim()) doneCells++;
+      }
+    }
+  });
+  // estimamos total real
+  const totalReal = Math.max(totalCells, doneCells);
+  const pctG = totalReal ? Math.round(doneCells/totalReal*100) : 0;
+
+  L.push(sep);
+  L.push('RESUMEN GLOBAL DE CUMPLIMIENTO');
+  L.push(sep);
+  L.push('  Registros con datos  : ' + doneCells);
+  L.push('  % sobre registrados  : ' + pctG + '%');
+  L.push('');
+
+  // ══════════════════════════════════════════════════════
+  // 1. CONDENSADORES EVAPORATIVOS — todos los meses
+  // ══════════════════════════════════════════════════════
+  L.push(sep);
+  L.push('1. CONDENSADORES EVAPORATIVOS — AÑO ' + yr);
+  L.push(sep);
+
+  for(let mo=0; mo<12; mo++){
+    const days = new Date(yr, mo+1, 0).getDate();
+    // check if this month has any data
+    let hasData = false;
+    for(let d=1;d<=days;d++){
+      [1,2].forEach(cn=>{
+        ['biocidad','temperatura','ph','turbidez'].forEach(f=>{
+          if(getVal(makeKey('ppcl',yr,mo,cn,d,f))) hasData=true;
+        });
+      });
+    }
+    L.push('');
+    L.push(sep2);
+    L.push('  ' + MONTHS[mo] + ' ' + yr + (hasData ? '' : '  [SIN DATOS]'));
+    L.push(sep2);
+    if(!hasData){ L.push('  (No se han registrado datos para este mes)'); continue; }
+
+    L.push(pad('DÍA',5) + ' | ' + pad('C1-BIOCIDAD',12) + ' | ' + pad('C1-TEMP',8) + ' | ' + pad('C1-PH',6) + ' | ' + pad('C1-TURB',8) + ' || ' + pad('C2-BIOCIDAD',12) + ' | ' + pad('C2-TEMP',8) + ' | ' + pad('C2-PH',6) + ' | ' + pad('C2-TURB',8));
+    L.push('-'.repeat(5)+'---'+'-'.repeat(12)+'---'+'-'.repeat(8)+'---'+'-'.repeat(6)+'---'+'-'.repeat(8)+'---'+'-'.repeat(12)+'---'+'-'.repeat(8)+'---'+'-'.repeat(6)+'---'+'-'.repeat(8));
+    for(let d=1;d<=days;d++){
+      const row = [pad(d,5)];
+      [1,2].forEach((cn,ci)=>{
+        if(ci===1) row.push('||');
+        ['biocidad','temperatura','ph','turbidez'].forEach(f=>{
+          row.push(pad(getVal(makeKey('ppcl',yr,mo,cn,d,f)), f==='biocidad'?12:f==='temperatura'||f==='turbidez'?8:6));
+        });
+      });
+      L.push(row.join(' | '));
+    }
+  }
+  L.push('');
+
+  // ══════════════════════════════════════════════════════
+  // 2. ACS — GRIFOS SEMANAL (todas las semanas con datos)
+  // ══════════════════════════════════════════════════════
+  L.push('');
+  L.push(sep);
+  L.push('2. GRIFOS ACS — CONTROL SEMANAL (TODAS LAS SEMANAS CON DATOS)');
+  L.push(sep);
+
+  // recopilar todas las semanas únicas que tienen datos
+  const semanas = new Set();
+  Object.keys(data).forEach(k=>{ if(k.startsWith('acs_s__')) semanas.add(k.split('__')[1]); });
+  // añadir semana actual aunque esté vacía
+  semanas.add(wk);
+
+  const semanasOrdenadas = [...semanas].sort();
+  semanasOrdenadas.forEach(semWk => {
+    L.push('');
+    L.push(sep2);
+    L.push('  SEMANA: ' + weekLabel(semWk) + '  (clave: ' + semWk + ')');
+    L.push(sep2);
+    L.push(pad('Nº',5)  + ' | ' + pad('NºInt',8) + ' | ' + pad('GRIFO DE AGUA',36) + ' | ' + pad('Turb.AF',8) + ' | ' + pad('Turb.AC',8) + ' | ' + 'Apertura');
+    L.push('-'.repeat(5)+'---'+'-'.repeat(8)+'---'+'-'.repeat(36)+'---'+'-'.repeat(8)+'---'+'-'.repeat(8)+'---'+'-'.repeat(8));
+    ACS_SEMANAL.forEach(g=>{
+      const tf = getVal(makeKey('acs_s',semWk,g.n,'tf'));
+      const tc = getVal(makeKey('acs_s',semWk,g.n,'tc'));
+      const ap = getVal(makeKey('acs_s',semWk,g.n,'ap'));
+      L.push(pad(g.n,5) + ' | ' + pad(g.ni,8) + ' | ' + pad(g.loc,36) + ' | ' + pad(tf,8) + ' | ' + pad(tc,8) + ' | ' + (ap||'—'));
+    });
+  });
+  L.push('');
+
+  // ══════════════════════════════════════════════════════
+  // 3. ACS — GRIFOS MENSUAL
+  // ══════════════════════════════════════════════════════
+  L.push('');
+  L.push(sep);
+  L.push('3. GRIFOS ACS — CONTROL MENSUAL — AÑO ' + yr);
+  L.push(sep);
+
+  ACS_MENSUAL.forEach((mesObj)=>{
+    const mo = MONTHS.indexOf(mesObj.mes);
+    L.push('');
+    L.push(sep2);
+    L.push('  ' + mesObj.mes + ' ' + yr);
+    L.push(sep2);
+    L.push(pad('Nº',5) + ' | ' + pad('NºInt',8) + ' | ' + pad('GRIFO',34) + ' | ' + pad('Cloro',7) + ' | ' + pad('PH',6) + ' | ' + pad('Estado',8) + ' | ' + pad('T.Cal',6) + ' | ' + pad('T.Fri',6));
+    L.push('-'.repeat(5)+'---'+'-'.repeat(8)+'---'+'-'.repeat(34)+'---'+'-'.repeat(7)+'---'+'-'.repeat(6)+'---'+'-'.repeat(8)+'---'+'-'.repeat(6)+'---'+'-'.repeat(6));
+    mesObj.items.forEach(g=>{
+      L.push(
+        pad(g.n,5)  + ' | ' +
+        pad(g.ni,8) + ' | ' +
+        pad(g.loc,34)+ ' | ' +
+        pad(getVal(makeKey('acs_m',yr,mo,g.n,'cloro')),7) + ' | ' +
+        pad(getVal(makeKey('acs_m',yr,mo,g.n,'ph')),6) + ' | ' +
+        pad(getVal(makeKey('acs_m',yr,mo,g.n,'estado')),8) + ' | ' +
+        pad(getVal(makeKey('acs_m',yr,mo,g.n,'tc')),6) + ' | ' +
+        pad(getVal(makeKey('acs_m',yr,mo,g.n,'tf')),6)
+      );
+    });
+  });
+  L.push('');
+
+  // ══════════════════════════════════════════════════════
+  // 4. DEPÓSITOS — mensual
+  // ══════════════════════════════════════════════════════
+  L.push('');
+  L.push(sep);
+  L.push('4. DEPÓSITOS — CONTROL MENSUAL — AÑO ' + yr);
+  L.push(sep);
+  L.push(pad('MES',12) + ' | ' + pad('DEPÓSITO',36) + ' | ' + pad('Cloro',7) + ' | ' + pad('PH',6) + ' | ' + pad('Temp',6));
+  L.push('-'.repeat(12)+'---'+'-'.repeat(36)+'---'+'-'.repeat(7)+'---'+'-'.repeat(6)+'---'+'-'.repeat(6));
+
+  ACS_DEPOSITOS.forEach((dep)=>{
+    const mo = MONTHS.indexOf(dep.mes);
+    [{n:'39',loc:'DEPÓSITO PRINCIPAL'},{n:'28',loc:'BOX LAVADO ISOTERMOS'}].forEach(d=>{
+      L.push(
+        pad(dep.mes,12) + ' | ' +
+        pad(d.loc,36)   + ' | ' +
+        pad(getVal(makeKey('dep',yr,mo,d.n,'cloro')),7) + ' | ' +
+        pad(getVal(makeKey('dep',yr,mo,d.n,'ph')),6) + ' | ' +
+        pad(getVal(makeKey('dep',yr,mo,d.n,'temp')),6)
+      );
+    });
+  });
+  L.push('');
+
+  // ══════════════════════════════════════════════════════
+  // 5. DIARIO — todos los días con datos
+  // ══════════════════════════════════════════════════════
+  L.push('');
+  L.push(sep);
+  L.push('5. AGUA FRÍA SANITARIA — CONTROL DIARIO (DÍAS CON DATOS)');
+  L.push(sep);
+
+  // recopilar fechas únicas del diario
+  const diasDiario = new Set();
+  Object.keys(data).forEach(k=>{ if(k.startsWith('dia__')) diasDiario.add(k.split('__')[1]); });
+  // añadir hoy
+  diasDiario.add(localDateStr(diarioDate));
+
+  const diasOrdenados = [...diasDiario].sort();
+  L.push(pad('FECHA',12) + ' | ' + pad('Nº',4) + ' | ' + pad('EQUIPO',36) + ' | ' + pad('PH',6) + ' | ' + pad('Cloro',7) + ' | ' + pad('Temp',6));
+  L.push('-'.repeat(12)+'---'+'-'.repeat(4)+'---'+'-'.repeat(36)+'---'+'-'.repeat(6)+'---'+'-'.repeat(7)+'---'+'-'.repeat(6));
+
+  diasOrdenados.forEach(dk=>{
+    DIARIO_ITEMS.forEach(it=>{
+      const ph    = getVal(makeKey('dia',dk,it.n,'ph'));
+      const cloro = getVal(makeKey('dia',dk,it.n,'cloro'));
+      const temp  = getVal(makeKey('dia',dk,it.n,'temp'));
+      if(ph||cloro||temp){
+        L.push(pad(dk,12) + ' | ' + pad(it.n,4) + ' | ' + pad(it.loc,36) + ' | ' + pad(ph,6) + ' | ' + pad(cloro,7) + ' | ' + pad(temp,6));
+      }
+    });
+    const obs = getVal(makeKey('dia',dk,'obs'));
+    if(obs) L.push('             OBSERVACIÓN: ' + obs);
+  });
+  L.push('');
+
+  // ── Pie ───────────────────────────────────────────────
+  L.push(sep);
+  L.push('  Reporte generado por MantenApp PPCL Legionella');
+  L.push('  ' + now.toLocaleString('es-ES'));
+  L.push('  Para: juanantonio.carmona@diagroup.com');
+  L.push(sep);
+
+  return L.join('\n');
+}
+
+// ── Exportar TXT completo ─────────────────────────────
+// ═══════════════════════════════════════════════════════
+//  EXCEL EXPORT — genera .xlsx con 5 hojas
+// ═══════════════════════════════════════════════════════
+
+// Estilo de cabecera azul marino
+function hdrStyle(bold){
+  return {
+    font:{bold:bold!==false, color:{rgb:'FFFFFF'}, sz:10},
+    fill:{fgColor:{rgb:'0F1F3D'}},
+    alignment:{horizontal:'center',vertical:'center',wrapText:true},
+    border:{bottom:{style:'medium',color:{rgb:'2589C7'}}}
+  };
+}
+function subHdrStyle(){
+  return {
+    font:{bold:true, color:{rgb:'FFFFFF'}, sz:9},
+    fill:{fgColor:{rgb:'1A2F52'}},
+    alignment:{horizontal:'center',vertical:'center'}
+  };
+}
+function cellStyle(v,field){
+  const base = {font:{sz:10}, alignment:{horizontal:'center',vertical:'center'}};
+  if(v===null||v===undefined||v===''){
+    return {...base, fill:{fgColor:{rgb:'F7F8FA'}}};
+  }
+  const n = parseFloat(v);
+  if(field==='ph' && !isNaN(n)){
+    if(n>=7.0&&n<=8.0) return {...base, fill:{fgColor:{rgb:'E8F7EF'}}, font:{...base.font,color:{rgb:'1A7A4A'}}};
+    if(n>=6.5&&n<=8.5) return {...base, fill:{fgColor:{rgb:'FFF7E6'}}, font:{...base.font,color:{rgb:'C97B00'}}};
+    return {...base, fill:{fgColor:{rgb:'FDF0EE'}}, font:{...base.font,color:{rgb:'C0392B'}}};
+  }
+  if(field==='temperatura' && !isNaN(n)){
+    if(n<=25) return {...base, fill:{fgColor:{rgb:'E8F7EF'}}, font:{...base.font,color:{rgb:'1A7A4A'}}};
+    if(n<=35) return {...base, fill:{fgColor:{rgb:'FFF7E6'}}, font:{...base.font,color:{rgb:'C97B00'}}};
+    return {...base, fill:{fgColor:{rgb:'FDF0EE'}}, font:{...base.font,color:{rgb:'C0392B'}}};
+  }
+  return {...base, fill:{fgColor:{rgb:'FFFFFF'}}};
+}
+function locStyle(){
+  return {font:{sz:10,bold:false}, alignment:{horizontal:'left',vertical:'center'}};
+}
+function titleStyle(){
+  return {font:{bold:true,sz:13,color:{rgb:'0F1F3D'}}, alignment:{horizontal:'left'}};
+}
+function metaStyle(){
+  return {font:{sz:9,color:{rgb:'6B7494'}}, alignment:{horizontal:'left'}};
+}
+
+function sc(v,s){ return {v:v, s:s}; }
+function cv(v,f){ return sc(v===''||v===null||v===undefined?'':v, cellStyle(v,f)); }
+
+function setColWidths(ws, widths){
+  ws['!cols'] = widths.map(w=>({wch:w}));
+}
+function addMerge(ws, r1,c1,r2,c2){
+  if(!ws['!merges']) ws['!merges']=[];
+  ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}});
+}
+function sheetFromAoA(aoa){
+  return XLSX.utils.aoa_to_sheet(aoa);
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXCEL — Solo mes activo, fiel al aspecto de la app
+// ═══════════════════════════════════════════════════════
+
+// ── Estilos ──────────────────────────────────────────
+const XS = {
+  // Cabecera principal: azul marino
+  hdr: (txt) => ({v:txt, s:{
+    font:{bold:true, color:{rgb:'FFFFFF'}, sz:11},
+    fill:{fgColor:{rgb:'0F1F3D'}},
+    alignment:{horizontal:'center',vertical:'center',wrapText:true},
+    border:{
+      bottom:{style:'medium',color:{rgb:'2589C7'}},
+      top:{style:'thin',color:{rgb:'2589C7'}},
+      left:{style:'thin',color:{rgb:'2589C7'}},
+      right:{style:'thin',color:{rgb:'2589C7'}}
+    }
+  }}),
+  // Sub-cabecera: azul medio
+  subHdr: (txt) => ({v:txt, s:{
+    font:{bold:true, color:{rgb:'FFFFFF'}, sz:9},
+    fill:{fgColor:{rgb:'1A2F52'}},
+    alignment:{horizontal:'center',vertical:'center',wrapText:true},
+    border:{bottom:{style:'thin',color:{rgb:'2589C7'}}}
+  }}),
+  // Separador de grupo (azul claro, como la app)
+  grpSep: (txt) => ({v:txt, s:{
+    font:{bold:true, color:{rgb:'1D6FA4'}, sz:10},
+    fill:{fgColor:{rgb:'E8F3FB'}},
+    alignment:{horizontal:'left',vertical:'center'},
+    border:{bottom:{style:'thin',color:{rgb:'C4C9D8'}}}
+  }}),
+  // Número de día / fila alternada
+  dayNum: (v, alt) => ({v:v, s:{
+    font:{bold:true, sz:10, color:{rgb:'0F1F3D'}},
+    fill:{fgColor:{rgb: alt ? 'EEF0F4' : 'FFFFFF'}},
+    alignment:{horizontal:'center',vertical:'center'},
+    border:{right:{style:'thin',color:{rgb:'D8DCE6'}}}
+  }}),
+  // Celda de dato vacía
+  empty: () => ({v:'', s:{
+    fill:{fgColor:{rgb:'F7F8FA'}},
+    alignment:{horizontal:'center',vertical:'center'},
+    border:{bottom:{style:'hair',color:{rgb:'D8DCE6'}},right:{style:'hair',color:{rgb:'D8DCE6'}}}
+  }}),
+  // Celda con valor — color según campo y valor
+  val: (v, field) => {
+    const n = parseFloat(v);
+    let fill = 'FFFFFF', fontColor = '1A2035';
+    if(v !== '' && v !== null && v !== undefined){
+      if(field==='ph' && !isNaN(n)){
+        if(n>=7.0&&n<=8.0)      { fill='E8F7EF'; fontColor='1A7A4A'; }
+        else if(n>=6.5&&n<=8.5) { fill='FFF7E6'; fontColor='C97B00'; }
+        else                    { fill='FDF0EE'; fontColor='C0392B'; }
+      } else if(field==='temperatura' && !isNaN(n)){
+        if(n<=25)      { fill='E8F7EF'; fontColor='1A7A4A'; }
+        else if(n<=35) { fill='FFF7E6'; fontColor='C97B00'; }
+        else           { fill='FDF0EE'; fontColor='C0392B'; }
+      }
+    }
+    const isEmpty = (v===''||v===null||v===undefined);
+    return {v: isEmpty?'':v, s:{
+      font:{sz:10, color:{rgb: isEmpty?'9BA3BC':fontColor}},
+      fill:{fgColor:{rgb: isEmpty?'F7F8FA':fill}},
+      alignment:{horizontal:'center',vertical:'center'},
+      border:{bottom:{style:'hair',color:{rgb:'D8DCE6'}},right:{style:'hair',color:{rgb:'D8DCE6'}}}
+    }};
+  },
+  // Celda texto izquierda (localización)
+  loc: (txt) => ({v:txt||'', s:{
+    font:{sz:10},
+    fill:{fgColor:{rgb:'FFFFFF'}},
+    alignment:{horizontal:'left',vertical:'center'},
+    border:{bottom:{style:'hair',color:{rgb:'D8DCE6'}}}
+  }}),
+  // Celda estado conservación
+  estado: (v) => {
+    const col = v==='BUENO'?{fill:'E8F7EF',font:'1A7A4A'}:
+                v==='MALO' ?{fill:'FDF0EE',font:'C0392B'}:
+                v==='REGULAR'?{fill:'FFF7E6',font:'C97B00'}:
+                {fill:'FFFFFF',font:'1A2035'};
+    return {v:v||'', s:{font:{bold:!!v,sz:10,color:{rgb:col.font}},fill:{fgColor:{rgb:col.fill}},alignment:{horizontal:'center',vertical:'center'}}};
+  },
+  // Celda apertura SÍ/NO/N/A
+  apertura: (v) => {
+    const col = v==='SÍ'?{fill:'E8F7EF',font:'1A7A4A'}:
+                v==='NO'?{fill:'FDF0EE',font:'C0392B'}:
+                {fill:'FFFFFF',font:'6B7494'};
+    return {v:v||'', s:{font:{bold:!!v,sz:10,color:{rgb:col.font}},fill:{fgColor:{rgb:col.fill}},alignment:{horizontal:'center',vertical:'center'}}};
+  },
+  // Título principal hoja
+  title: (txt) => ({v:txt, s:{
+    font:{bold:true, sz:14, color:{rgb:'0F1F3D'}},
+    fill:{fgColor:{rgb:'FFFFFF'}},
+    alignment:{horizontal:'left',vertical:'center'}
+  }}),
+  // Meta info
+  meta: (txt) => ({v:txt, s:{
+    font:{sz:9, color:{rgb:'6B7494'}},
+    alignment:{horizontal:'left'}
+  }}),
+  // Número de fila (Nº grifo)
+  num: (v) => ({v:v||'', s:{
+    font:{sz:10, color:{rgb:'424C6A'}},
+    fill:{fgColor:{rgb:'F7F8FA'}},
+    alignment:{horizontal:'center',vertical:'center'},
+    border:{right:{style:'thin',color:{rgb:'D8DCE6'}}}
+  }}),
+  // Separador (ya no se usa para turbidez — ahora es diaria)
+  dash: () => ({v:'—', s:{
+    font:{sz:10,color:{rgb:'9BA3BC'}},
+    fill:{fgColor:{rgb:'F0F2F5'}},
+    alignment:{horizontal:'center',vertical:'center'}
+  }}),
+  blank: () => ({v:'',s:{}})
+};
+
+function xlsMerges(ws, merges){ ws['!merges'] = (ws['!merges']||[]).concat(merges); }
+function xlsCols(ws, widths){ ws['!cols'] = widths.map(w=>({wch:w})); }
+function xlsRows(ws, rows){ ws['!rows'] = rows; }
+
+// ── HOJA 1: CONDENSADORES — mes activo ───────────────
+function buildSheetCondensadores(yr, mo){
+  const mesNombre = MONTHS[mo];
+  const days = new Date(yr, mo+1, 0).getDate();
+  const aoa = [];
+  const COL = 9; // total columnas
+
+  // Fila 0 — Título
+  aoa.push([ XS.title('PPCL LEGIONELLA — CONDENSADORES EVAPORATIVOS'), ...Array(COL-1).fill(XS.blank()) ]);
+  // Fila 1 — subtítulo
+  aoa.push([ XS.meta('Empresa: DIAGROUP  ·  Mes: '+mesNombre+' '+yr+'  ·  Generado: '+new Date().toLocaleDateString('es-ES')), ...Array(COL-1).fill(XS.blank()) ]);
+  aoa.push( Array(COL).fill(XS.blank()) ); // spacer
+
+  // Fila 3 — Cabecera condensadores (fusionadas)
+  aoa.push([
+    XS.hdr('DÍA'),
+    XS.hdr('CONDENSADOR Nº 1'), XS.blank(), XS.blank(), XS.blank(),
+    XS.hdr('CONDENSADOR Nº 2'), XS.blank(), XS.blank(), XS.blank(),
+  ]);
+  // Fila 4 — sub-cabecera campos
+  aoa.push([
+    XS.subHdr(''),
+    XS.subHdr('BIOCIDAD'), XS.subHdr('TEMP (°C)'), XS.subHdr('PH'), XS.subHdr('TURBIDEZ'),
+    XS.subHdr('BIOCIDAD'), XS.subHdr('TEMP (°C)'), XS.subHdr('PH'), XS.subHdr('TURBIDEZ'),
+  ]);
+
+  // Filas de datos — un día por fila
+  for(let d=1; d<=days; d++){
+    const alt = d%2===0;
+    const row = [ XS.dayNum(d, alt) ];
+    [1,2].forEach(cn=>{
+      ['biocidad','temperatura','ph','turbidez'].forEach(f=>{
+        const v = getVal(makeKey('ppcl',yr,mo,cn,d,f));
+        row.push(XS.val(v, f));
+      });
+    });
+    aoa.push(row);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws, [5, 14,11,7,11, 14,11,7,11]);
+  xlsRows(ws, [{hpt:20},{hpt:14},{hpt:6},{hpt:22},{hpt:20}]);
+  // Merge cabecera condensadores
+  xlsMerges(ws, [
+    {s:{r:3,c:0},e:{r:4,c:0}},   // DÍA span 2 filas
+    {s:{r:3,c:1},e:{r:3,c:4}},   // COND 1
+    {s:{r:3,c:5},e:{r:3,c:8}},   // COND 2
+    {s:{r:0,c:0},e:{r:0,c:8}},   // Título
+    {s:{r:1,c:0},e:{r:1,c:8}},   // Meta
+  ]);
+  ws['!freeze'] = {xSplit:1, ySplit:5}; // congelar fila cabecera y col día
+  return ws;
+}
+
+// ── HOJA 2: ACS SEMANAL — semana activa ──────────────
+function buildSheetAcsSemanal(yr, wk){
+  // Export ALL weeks that have data + current week
+  const semanas = new Set([wk]);
+  Object.keys(data||{}).forEach(k=>{ if(k.startsWith('acs_s__')) semanas.add(k.split('__')[1]); });
+  const semanasOrdenadas = [...semanas].sort();
+
+  const aoa=[];
+  const COL=6;
+  aoa.push([XS.title('PPCL LEGIONELLA — ACS GRIFOS SEMANAL · '+yr), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push([XS.meta('Todas las semanas registradas  ·  Generado: '+new Date().toLocaleDateString('es-ES')), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push(Array(COL).fill(XS.blank()));
+
+  semanasOrdenadas.forEach(semWk=>{
+    const wlabel2 = weekLabel(semWk);
+    // Header semana
+    aoa.push([
+      {v:'SEMANA: '+wlabel2, s:{font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'0F1F3D'}},alignment:{horizontal:'left',vertical:'center'}}},
+      ...Array(COL-1).fill({v:'',s:{fill:{fgColor:{rgb:'0F1F3D'}}}})
+    ]);
+    aoa.push([
+      XS.subHdr('Nº'),XS.subHdr('Nº Interno'),XS.subHdr('Grifo de Agua'),
+      XS.subHdr('Turbidez AF'),XS.subHdr('Turbidez AC'),XS.subHdr('Apertura')
+    ]);
+    let hasAnyData = false;
+    ACS_SEMANAL.forEach(g=>{
+      const tf=getVal(makeKey('acs_s',semWk,g.n,'tf'));
+      const tc=getVal(makeKey('acs_s',semWk,g.n,'tc'));
+      const ap=getVal(makeKey('acs_s',semWk,g.n,'ap'));
+      if(tf||tc||ap) hasAnyData=true;
+      aoa.push([
+        XS.num(g.n),XS.num(g.ni),XS.loc(g.loc),
+        XS.val(tf,'turbidez'),XS.val(tc,'turbidez'),XS.apertura(ap)
+      ]);
+    });
+    aoa.push(Array(COL).fill(XS.blank()));
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws,[6,10,40,16,16,14]);
+  xlsMerges(ws,[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}]);
+  ws['!freeze']={xSplit:0,ySplit:3};
+  return ws;
+}
+
+// ── HOJA 3: ACS MENSUAL — mes activo ─────────────────
+function buildSheetAcsMensual(yr, mo){
+  const mesNombre = MONTHS[mo];
+  const mesData   = ACS_MENSUAL.find(m=>m.mes===mesNombre);
+  const aoa = [];
+  const COL = 8;
+
+  aoa.push([ XS.title('PPCL LEGIONELLA — GRIFOS ACS · CONTROL MENSUAL'), ...Array(COL-1).fill(XS.blank()) ]);
+  aoa.push([ XS.meta('Mes: '+mesNombre+' '+yr+'  ·  Generado: '+new Date().toLocaleDateString('es-ES')), ...Array(COL-1).fill(XS.blank()) ]);
+  aoa.push( Array(COL).fill(XS.blank()) );
+  aoa.push([
+    XS.hdr('Nº'), XS.hdr('Nº Interno'), XS.hdr('Grifo de Agua'),
+    XS.hdr('Cloro (mg/L)'), XS.hdr('PH'),
+    XS.hdr('Estado Conservación'), XS.hdr('Temp. Caliente (°C)'), XS.hdr('Temp. Fría (°C)')
+  ]);
+
+  if(mesData && mesData.items.length){
+    mesData.items.forEach(g=>{
+      const cloro = getVal(makeKey('acs_m',yr,mo,g.n,'cloro'));
+      const ph    = getVal(makeKey('acs_m',yr,mo,g.n,'ph'));
+      const est   = getVal(makeKey('acs_m',yr,mo,g.n,'estado'));
+      const tc    = getVal(makeKey('acs_m',yr,mo,g.n,'tc'));
+      const tf    = getVal(makeKey('acs_m',yr,mo,g.n,'tf'));
+      aoa.push([
+        XS.num(g.n), XS.num(g.ni), XS.loc(g.loc),
+        XS.val(cloro,'cloro'), XS.val(ph,'ph'),
+        XS.estado(est),
+        XS.val(tc,'temperatura'), XS.val(tf,'temperatura')
+      ]);
+    });
+  } else {
+    aoa.push([ {v:'(No hay grifos asignados para '+mesNombre+')',s:{font:{italic:true,color:{rgb:'9BA3BC'},sz:10}}}, ...Array(COL-1).fill(XS.blank()) ]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws, [5, 10, 42, 12, 7, 16, 18, 16]);
+  xlsRows(ws, [{hpt:20},{hpt:14},{hpt:6},{hpt:22}]);
+  xlsMerges(ws, [
+    {s:{r:0,c:0},e:{r:0,c:7}},
+    {s:{r:1,c:0},e:{r:1,c:7}},
+  ]);
+  ws['!freeze'] = {xSplit:0, ySplit:4};
+  return ws;
+}
+
+// ── HOJA 4: DEPÓSITOS — mes activo ───────────────────
+function buildSheetDepositos(yr, mo){
+  // Export ALL 12 months
+  const aoa=[];
+  const COL=6;
+  aoa.push([XS.title('PPCL LEGIONELLA — DEPÓSITOS · AÑO '+yr), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push([XS.meta('Todos los meses  ·  Generado: '+new Date().toLocaleDateString('es-ES')), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push(Array(COL).fill(XS.blank()));
+  aoa.push([
+    XS.hdr('Mes'),XS.hdr('Depósito / Equipo'),
+    XS.hdr('Cloro (mg/L)'),XS.hdr('PH'),XS.hdr('Temperatura (°C)'),XS.hdr('Boquilla')
+  ]);
+  ACS_DEPOSITOS.forEach(dep=>{
+    const mi=MONTHS.indexOf(dep.mes);
+    [{n:'39',loc:'DEPÓSITO CONTRAINCENDIOS',boquilla:false},{n:'28',loc:'BOX LAVADO ISOTERMOS',boquilla:true}].forEach((d,i)=>{
+      const cloro=getVal(makeKey('dep',yr,mi,d.n,'cloro'));
+      const ph=getVal(makeKey('dep',yr,mi,d.n,'ph'));
+      const temp=getVal(makeKey('dep',yr,mi,d.n,'temp'));
+      const boq=d.boquilla?getVal(makeKey('dep',yr,mi,d.n,'boquilla')):'—';
+      aoa.push([
+        {v:i===0?dep.mes:'',s:{font:{bold:i===0,sz:10,color:{rgb:'0F1F3D'}},fill:{fgColor:{rgb:i===0?'E8F3FB':'FFFFFF'}},alignment:{horizontal:'center',vertical:'center'}}},
+        XS.loc(d.loc),XS.val(cloro,'cloro'),XS.val(ph,'ph'),XS.val(temp,'temperatura'),
+        {v:boq||'',s:{font:{sz:10},alignment:{horizontal:'center'}}}
+      ]);
+    });
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws,[12,32,14,8,16,12]);
+  xlsMerges(ws,[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}]);
+  return ws;
+}
+
+// ── HOJA 5: DIARIO — día activo ──────────────────────
+function buildSheetDiario(dk){
+  // Export ALL days that have data
+  const dias = new Set([dk]);
+  Object.keys(data||{}).forEach(k=>{ if(k.startsWith('dia__')) dias.add(k.split('__')[1]); });
+  const diasOrdenados = [...dias].sort();
+
+  const aoa=[];
+  const COL=6;
+  aoa.push([XS.title('PPCL LEGIONELLA — CONTROL DIARIO AGUA FRÍA · '+ppclYear), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push([XS.meta('Todos los días registrados  ·  Generado: '+new Date().toLocaleDateString('es-ES')), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push(Array(COL).fill(XS.blank()));
+  aoa.push([
+    XS.hdr('Fecha'),XS.hdr('Nº'),XS.hdr('Equipo / Punto'),
+    XS.hdr('PH'),XS.hdr('Cloro (mg/L)'),XS.hdr('Temp. (°C)')
+  ]);
+
+  diasOrdenados.forEach(d=>{
+    let hasDatos=false;
+    DIARIO_ITEMS.forEach(it=>{
+      if(getVal(makeKey('dia',d,it.n,'ph'))||getVal(makeKey('dia',d,it.n,'cloro'))||getVal(makeKey('dia',d,it.n,'temp'))) hasDatos=true;
+    });
+    if(!hasDatos&&d!==dk) return;
+
+    const [y2,m2,d2]=d.split('-').map(Number);
+    const dtLabel=new Date(y2,m2-1,d2).toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    DIARIO_ITEMS.forEach((it,ii)=>{
+      const ph=getVal(makeKey('dia',d,it.n,'ph'));
+      const cloro=getVal(makeKey('dia',d,it.n,'cloro'));
+      const temp=getVal(makeKey('dia',d,it.n,'temp'));
+      aoa.push([
+        {v:ii===0?dtLabel:'', s:{font:{bold:ii===0,sz:10},fill:{fgColor:{rgb:ii===0?'E8F3FB':'FFFFFF'}},alignment:{horizontal:'center',vertical:'center',wrapText:true}}},
+        XS.num(it.n),XS.loc(it.loc),
+        XS.val(ph,'ph'),XS.val(cloro,'cloro'),XS.val(temp,'temperatura')
+      ]);
+    });
+    const obs=getVal(makeKey('dia',d,'obs'));
+    if(obs) aoa.push([
+      {v:'Obs:',s:{font:{bold:true,sz:9,color:{rgb:'6B7494'}},alignment:{horizontal:'right'}}},
+      {v:obs,s:{font:{italic:true,sz:9,color:{rgb:'424C6A'}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}},
+      ...Array(COL-2).fill(XS.blank())
+    ]);
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws,[20,6,38,8,12,10]);
+  xlsMerges(ws,[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}]);
+  ws['!freeze']={xSplit:0,ySplit:4};
+  return ws;
+}
+
+// ── HOJA EVAPORATIVOS MENSUAL ────────────────────────
+function buildSheetEvapMensual(yr, mo){
+  const mesNombre = MONTHS[mo];
+  const aoa = [];
+  const COL = 6;
+  aoa.push([XS.title('PPCL LEGIONELLA — EVAPORATIVOS MENSUAL'), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push([XS.meta('Mes: '+mesNombre+' '+yr+'  ·  Generado: '+new Date().toLocaleDateString('es-ES')), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push(Array(COL).fill(XS.blank()));
+  aoa.push([
+    XS.hdr('Nº'), XS.hdr('EVAPORATIVO'),
+    XS.hdr('BIOCIDAD'), XS.hdr('PH'), XS.hdr('TEMPERATURA (°C)'), XS.hdr('TURBIDEZ')
+  ]);
+  EVAP_ITEMS.forEach((ev,i)=>{
+    const alt = i%2===0;
+    aoa.push([
+      XS.num(ev.n),
+      {v:ev.loc, s:{font:{sz:10}, fill:{fgColor:{rgb: alt?'F7F8FA':'FFFFFF'}}, alignment:{horizontal:'left',vertical:'center'}}},
+      XS.val(getVal(makeKey('evap',yr,mo,ev.n,'biocidad')),''),
+      XS.val(getVal(makeKey('evap',yr,mo,ev.n,'ph')),'ph'),
+      XS.val(getVal(makeKey('evap',yr,mo,ev.n,'temp')),'temperatura'),
+      XS.val(getVal(makeKey('evap',yr,mo,ev.n,'turbidez')),''),
+    ]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws,[5,24,14,8,16,12]);
+  xlsRows(ws,[{hpt:20},{hpt:14},{hpt:6},{hpt:22}]);
+  xlsMerges(ws,[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}]);
+  ws['!freeze']={xSplit:0,ySplit:4};
+  return ws;
+}
+
+// ── HOJA AGUA POTABLE ────────────────────────────────
+function buildSheetAguaPotable(dk){
+  // dk = lunes de la semana activa
+  const wk  = dk;
+  const grifo = getPotableGrifoSemana(wk);
+  const gKey  = grifo.grifo.replace(/\s/g,'_');
+  const [y2,m2,d2]=dk.split('-').map(Number);
+  const dtLabel=new Date(y2,m2-1,d2).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const aoa=[];
+  const COL=9;
+  aoa.push([XS.title('REGISTRO CONTROL AGUA POTABLE — SEMANAL'), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push([XS.meta('Ref: RG.ALM.03-1  ·  Almacén: ANTEQUERA  ·  Semana: '+weekLabel(wk)+'  ·  Grifo: '+grifo.grifo), ...Array(COL-1).fill(XS.blank())]);
+  aoa.push(Array(COL).fill(XS.blank()));
+  aoa.push([
+    XS.hdr('Semana'), XS.hdr('Grifo / Punto de Control'),
+    XS.hdr('COLOR'), XS.hdr('OLOR'), XS.hdr('SABOR'),
+    XS.hdr('CLORO LIBRE (≥0.2 mg/L)'),
+    XS.hdr('RESULTADO (S/N)'),
+    XS.hdr('FIRMA REALIZACIÓN'),
+    XS.hdr('INCIDENCIA')
+  ]);
+  const mkp = f => makeKey('pot', wk, gKey, f);
+  const res   = getVal(mkp('result'));
+  const resCol  = res==='S'?'1A7A4A':res==='N'?'C0392B':'1A2035';
+  const resFill = res==='S'?'E8F7EF':res==='N'?'FDF0EE':'FFFFFF';
+  const incid = getVal(mkp('incid'));
+  aoa.push([
+    {v:weekLabel(wk), s:{font:{sz:10},fill:{fgColor:{rgb:'F7F8FA'}},alignment:{horizontal:'center',vertical:'center',wrapText:true}}},
+    XS.loc(grifo.grifo),
+    XS.apertura(getVal(mkp('color'))==='CORRECTO'?'SÍ':getVal(mkp('color'))==='INCORRECTO'?'NO':''),
+    XS.apertura(getVal(mkp('olor'))==='CORRECTO'?'SÍ':getVal(mkp('olor'))==='INCORRECTO'?'NO':''),
+    XS.apertura(getVal(mkp('sabor'))==='CORRECTO'?'SÍ':getVal(mkp('sabor'))==='INCORRECTO'?'NO':''),
+    XS.val(getVal(mkp('cloro')),'cloro'),
+    {v:res||'', s:{font:{bold:!!res,sz:10,color:{rgb:resCol}},fill:{fgColor:{rgb:resFill}},alignment:{horizontal:'center',vertical:'center'}}},
+    {v:getVal(mkp('firma'))||'', s:{font:{sz:10},alignment:{horizontal:'center',vertical:'center'}}},
+    {v:incid==='X'?'X':'', s:{font:{bold:incid==='X',sz:12,color:{rgb:incid==='X'?'C0392B':'1A2035'}},fill:{fgColor:{rgb:incid==='X'?'FDF0EE':'FFFFFF'}},alignment:{horizontal:'center',vertical:'center'}}},
+  ]);
+  const obs=getVal(makeKey('pot',wk,gKey,'obs'));
+  aoa.push([
+    {v:'Observaciones:', s:{font:{bold:true,sz:9,color:{rgb:'6B7494'}},alignment:{horizontal:'right'}}},
+    {v:obs||'(Sin observaciones)', s:{font:{italic:!obs,sz:10,color:{rgb:obs?'1A2035':'9BA3BC'}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}},
+    ...Array(COL-2).fill(XS.blank())
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  xlsCols(ws,[10,30,10,8,8,14,10,18,10]);
+  xlsRows(ws,[{hpt:20},{hpt:14},{hpt:6},{hpt:28}]);
+  xlsMerges(ws,[
+    {s:{r:0,c:0},e:{r:0,c:8}},
+    {s:{r:1,c:0},e:{r:1,c:8}},
+    {s:{r:aoa.length-1,c:1},e:{r:aoa.length-1,c:8}},
+  ]);
+  ws['!freeze']={xSplit:0,ySplit:4};
+  return ws;
+}
+
+// ── Construir workbook y descargar ───────────────────
+function buildAndDownloadExcel(filename){
+  const yr  = ppclYear;
+  const mo  = ppclMonth;
+  const wk  = getWeekKey(acsDate);
+  const dk  = localDateStr(diarioDate);
+  const now = new Date();
+
+  const wb = XLSX.utils.book_new();
+  wb.Props = {
+    Title:   'PPCL Legionella Almacén '+MONTHS[mo]+' '+yr,
+    Author:  'MantenApp PPCL',
+    Company: 'DIAGROUP',
+    CreatedDate: now
+  };
+
+  XLSX.utils.book_append_sheet(wb, buildSheetCondensadores(yr, mo),   '1_Condensadores');
+  XLSX.utils.book_append_sheet(wb, buildSheetEvapMensual(evapYear, evapMonth), '2_Evaporativos_Mensual');
+  XLSX.utils.book_append_sheet(wb, buildSheetAcsSemanal(yr, wk),      '3_ACS_Semanal');
+  XLSX.utils.book_append_sheet(wb, buildSheetAcsMensual(yr, mo),      '4_ACS_Mensual');
+  XLSX.utils.book_append_sheet(wb, buildSheetDepositos(yr, mo),       '5_Depositos');
+  XLSX.utils.book_append_sheet(wb, buildSheetDiario(dk),              '6_Diario_BoxLavado');
+  XLSX.utils.book_append_sheet(wb, buildSheetAguaPotable(getWeekKey(potableDate)), '7_Agua_Potable');
+
+  XLSX.writeFile(wb, filename);
+}
+
+
+function exportData(){
+  const yr   = ppclYear;
+  const mo   = ppclMonth;
+  const now  = new Date();
+  const mes  = MONTHS[mo];
+  const fname = 'PPCL_Legionella_'+mes+'_'+yr+'_'+localDateStr(now)+'.xlsx';
+  try{
+    buildAndDownloadExcel(fname);
+    showToast('📊 Excel descargado — '+mes+' '+yr);
+  }catch(e){
+    showToast('❌ Error al generar Excel: '+e.message);
+    console.error(e);
+  }
+}
+
+// Variables para el modal de email
+let _emailFilename = '';
+let _emailBody = '';
+let _emailSubject = '';
+
+function sendEmail(){
+  const now      = new Date();
+  const yr       = ppclYear;
+  const wk       = getWeekKey(acsDate);
+  const fechaHoy = now.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+
+  // Estadísticas
+  let doneCells=0, totalCells=0;
+  Object.keys(data).forEach(k=>{
+    if((k.startsWith('ppcl')||k.startsWith('acs_')||k.startsWith('dep')||k.startsWith('dia'))
+       && !k.includes('sep_date') && !k.includes('obs')){
+      totalCells++;
+      if(data[k]&&data[k].trim()) doneCells++;
+    }
+  });
+  const pct = totalCells ? Math.round(doneCells/totalCells*100) : 0;
+
+  // Resumen condensadores
+  const days = new Date(yr,ppclMonth+1,0).getDate();
+  let condLines=[];
+  for(let d=1;d<=days;d++){
+    const b1=getVal(makeKey('ppcl',yr,ppclMonth,1,d,'biocidad'));
+    const t1=getVal(makeKey('ppcl',yr,ppclMonth,1,d,'temperatura'));
+    const p1=getVal(makeKey('ppcl',yr,ppclMonth,1,d,'ph'));
+    const b2=getVal(makeKey('ppcl',yr,ppclMonth,2,d,'biocidad'));
+    const t2=getVal(makeKey('ppcl',yr,ppclMonth,2,d,'temperatura'));
+    const p2=getVal(makeKey('ppcl',yr,ppclMonth,2,d,'ph'));
+    if(b1||t1||p1||b2||t2||p2){
+      condLines.push('  Dia '+String(d).padStart(2,'0')+
+        ' | C1: Bio='+(b1||'-')+' T='+(t1||'-')+' PH='+(p1||'-')+
+        ' | C2: Bio='+(b2||'-')+' T='+(t2||'-')+' PH='+(p2||'-'));
+    }
+  }
+
+  // Resumen ACS
+  let acsLines=[];
+  ACS_SEMANAL.forEach(g=>{
+    const tf=getVal(makeKey('acs_s',wk,g.n,'tf'));
+    const tc=getVal(makeKey('acs_s',wk,g.n,'tc'));
+    const ap=getVal(makeKey('acs_s',wk,g.n,'ap'));
+    if(tf||tc||ap) acsLines.push('  ['+g.n+'] '+g.loc.substring(0,30)+' | AF:'+(tf||'-')+' AC:'+(tc||'-')+' Ap:'+(ap||'-'));
+  });
+
+  // Preparar nombre archivo
+  _emailFilename = 'PPCL_Legionella_'+MONTHS[ppclMonth]+'_'+yr+'_'+localDateStr(now)+'.xlsx';
+
+  // Preparar cuerpo correo
+  _emailBody = [
+    'Estimado Juan Antonio,',
+    '',
+    'Le remito el reporte PPCL Legionella del Almacen.',
+    'El archivo Excel (.xlsx) con todos los datos va adjunto a este correo.',
+    '',
+    'RESUMEN — '+fechaHoy,
+    '  Semana       : '+weekLabel(wk),
+    '  Mes activo   : '+MONTHS[ppclMonth]+' '+yr,
+    '  Completados  : '+doneCells+' registros',
+    '  Cumplimiento : '+pct+'%',
+    '',
+    condLines.length?'CONDENSADORES '+MONTHS[ppclMonth]+':':'',
+    ...condLines.slice(0,10),
+    condLines.length>10?'  ... (ver Excel adjunto)':'',
+    '',
+    acsLines.length?'GRIFOS ACS semana '+weekLabel(wk)+':':'',
+    ...acsLines.slice(0,8),
+    acsLines.length>8?'  ... (ver Excel adjunto)':'',
+    '',
+    'El Excel contiene 5 hojas del mes '+MONTHS[ppclMonth]+' '+yr+': Condensadores, ACS Semanal, ACS Mensual, Depositos y Diario.',
+    '',
+    'Generado por MantenApp PPCL Legionella — DIAGROUP',
+    now.toLocaleString('es-ES'),
+  ].filter(l=>l!==null).join('\n');
+
+  _emailSubject = 'PPCL Legionella Alm. '+MONTHS[ppclMonth]+' '+yr+' — '+fechaHoy+' — '+pct+'% cumplimiento';
+
+  // Actualizar modal
+  document.getElementById('excelFilename').textContent = _emailFilename;
+  // Reset steps
+  ['estep1','estep2','estep3'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.classList.remove('active','done');
+    if(i===0) el.classList.add('active');
+  });
+  document.getElementById('emailProgressBar').style.width='0%';
+
+  // Abrir modal
+  document.getElementById('emailModal').classList.add('open');
+}
+
+function closeEmailModal(){
+  document.getElementById('emailModal').classList.remove('open');
+}
+
+function downloadExcelStep(){
+  try{
+    buildAndDownloadExcel(_emailFilename);
+    // Mark step 1 done, activate step 2
+    document.getElementById('estep1').classList.remove('active');
+    document.getElementById('estep1').classList.add('done');
+    document.getElementById('estep2').classList.add('active');
+    document.getElementById('emailProgressBar').style.width='50%';
+    showToast('📊 Excel '+MONTHS[ppclMonth]+' '+ppclYear+' descargado en Descargas');
+  }catch(e){
+    showToast('❌ Error al generar Excel: '+e.message);
+    console.error(e);
+  }
+}
+
+function openMailStep(){
+  const subject = encodeURIComponent(_emailSubject);
+  const body    = encodeURIComponent(_emailBody);
+  // Gmail web — funciona en todos los móviles con cuenta Google
+  const gmailUrl = 'https://mail.google.com/mail/?view=cm'
+    +'&to=juanantonio.carmona@diagroup.com'
+    +'&su='+subject
+    +'&body='+body;
+  const mailto = gmailUrl; // usar Gmail web
+  // Abrir Gmail en nueva pestaña
+  window.open(mailto, '_blank');
+
+  // Mark step 2 done, activate step 3
+  setTimeout(()=>{
+    document.getElementById('estep2').classList.remove('active');
+    document.getElementById('estep2').classList.add('done');
+    document.getElementById('estep3').classList.add('active');
+    document.getElementById('emailProgressBar').style.width='100%';
+  }, 800);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  const hora = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const el = document.getElementById('clockDisplay');
+  if(el) el.textContent = hora;
+}
+
+// ═══════════════════════════════════════════════════════
+//  AUTO-SAVE on input
+// ═══════════════════════════════════════════════════════
+document.addEventListener('change',e=>{
+  if(e.target.dataset&&e.target.dataset.key) saveData();
+});
+
+// ═══════════════════════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAll();}
+});
+// ═══════════════════════════════════════════════════════
+//  FIREBASE — Credenciales integradas + sincronización real
+// ═══════════════════════════════════════════════════════
+const FB_HARDCODED = {
+  apiKey           : 'AIzaSyDwMDcw4LRZlP4npDPRpRO8kNDxMTzgYW8',
+  authDomain       : 'ppcl-legionella-almacen.firebaseapp.com',
+  databaseURL      : 'https://ppcl-legionella-almacen-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId        : 'ppcl-legionella-almacen',
+  storageBucket    : 'ppcl-legionella-almacen.firebasestorage.app',
+  messagingSenderId: '836795784522',
+  appId            : '1:836795784522:web:b8ba4a63d8216ab44e75b3'
+};
+
+let fbDb         = null;
+let fbRef        = null;
+let fbConfigured = false;
+let _fbSaving    = false;  // bloquea el listener mientras escribimos nosotros
+const FB_CFG_KEY = 'ppcl_firebase_cfg';
+
+// ─── Actualizar indicador de sync en header y config ────
+function setSyncStatus(type, msg){
+  // Barra en config
+  const bar = document.getElementById('syncStatusBar');
+  const txt = document.getElementById('syncStatusText');
+  if(bar && txt){
+    bar.className = 'sync-status ' + type;
+    const iconEl = bar.querySelector('span:first-child');
+    const icons = {ok:'☁️', error:'❌', pending:'⏳'};
+    if(iconEl) iconEl.textContent = icons[type] || '⏳';
+    txt.textContent = msg;
+  }
+  // Indicador en header
+  const hi = document.getElementById('hdrSyncIndicator');
+  const ht = document.getElementById('hdrSyncText');
+  if(hi && ht){
+    hi.className = 'sync-indicator ' + type;
+    const shortMsg = {
+      ok: '☁️ Sync OK',
+      error: '❌ Sin sync',
+      pending: '⏳ Conectando'
+    };
+    ht.textContent = shortMsg[type] || msg;
+  }
+}
+
+// ─── Guardar en Firebase ─────────────────────────────────
+function saveToFirebase(){
+  if(!fbConfigured || !fbRef){ return; }
+  _fbSaving = true;
+  data.__device = (navigator.userAgent || '').substring(0, 60);
+  fbRef.set(data)
+    .then(()=>{
+      setSyncStatus('ok', '☁️ Guardado en Firebase — ' + new Date().toLocaleTimeString('es-ES'));
+    })
+    .catch(err=>{
+      setSyncStatus('error', '❌ Error al guardar: ' + err.message);
+      console.error('[Firebase save]', err);
+    })
+    .finally(()=>{
+      setTimeout(()=>{ _fbSaving = false; }, 2500);
+    });
+}
+
+// ─── Inicializar Firebase ────────────────────────────────
+function initFirebase(cfg){
+  try{
+    // Guardia: si el SDK no cargó (sin internet al abrir), salir sin explotar
+    if(typeof firebase === 'undefined'){
+      setSyncStatus('error','❌ Firebase SDK no disponible — sin conexión a internet');
+      return false;
+    }
+    // Solo inicializar una vez — Firebase compat guarda las apps en firebase.apps
+    let app;
+    if(firebase.apps && firebase.apps.length > 0){
+      app = firebase.apps[0];
+    } else {
+      app = firebase.initializeApp(cfg);
+    }
+    fbDb = firebase.database(app);
+    fbRef = fbDb.ref('ppcl_data');
+    fbConfigured = true;
+
+    // Listener de conectividad
+    fbDb.ref('.info/connected').on('value', snap => {
+      const connected = snap.val() === true;
+      if(connected){
+        setSyncStatus('ok', '✅ Firebase conectado — sincronización activa');
+      } else {
+        setSyncStatus('pending', '⏳ Sin conexión — esperando red…');
+      }
+    });
+
+    // Listener de datos — recibe cambios de otros dispositivos
+    fbRef.on('value', snapshot => {
+      if(_fbSaving) return;  // ignorar eco de nuestra propia escritura
+      const remote = snapshot.val();
+      if(!remote) return;
+      const remoteTs = remote.__ts || 0;
+      const localTs  = data.__ts  || 0;
+      if(remoteTs > localTs){
+        data = remote;
+        try{ localStorage.setItem(SK, JSON.stringify(data)); }catch(e){}
+        refreshAllViews();
+        setSyncStatus('ok', '🔄 Datos recibidos de otro dispositivo — ' + new Date().toLocaleTimeString('es-ES'));
+        showToast('🔄 Datos actualizados desde otro dispositivo');
+      }
+    }, err => {
+      setSyncStatus('error', '❌ Error Firebase: ' + err.message);
+      console.error('[Firebase listener]', err);
+    });
+
+    return true;
+  } catch(err){
+    setSyncStatus('error', '❌ Error al conectar: ' + err.message);
+    console.error('[Firebase init]', err);
+    return false;
+  }
+}
+
+// ─── Botón "Conectar Firebase" en config ────────────────
+function saveFirebaseConfig(){
+  const statusEl = document.getElementById('fbStatus');
+  if(statusEl){ statusEl.style.color='var(--amber)'; statusEl.textContent='⏳ Conectando…'; }
+  const ok = initFirebase(FB_HARDCODED);
+  if(ok && statusEl){
+    statusEl.style.color='var(--green)';
+    statusEl.textContent='✅ Conectado correctamente';
+    showToast('🔥 Firebase conectado');
+  }
+}
+
+// ─── Probar conexión ─────────────────────────────────────
+function testFirebaseConnection(){
+  const statusEl = document.getElementById('fbStatus');
+  if(!fbConfigured){ if(statusEl) statusEl.textContent='⚠️ No inicializado todavía'; return; }
+  if(statusEl){ statusEl.style.color='var(--amber)'; statusEl.textContent='⏳ Probando…'; }
+  fbDb.ref('.info/connected').once('value', snap=>{
+    if(snap.val()===true){
+      if(statusEl){ statusEl.style.color='var(--green)'; statusEl.textContent='✅ Conexión activa — OK'; }
+    } else {
+      if(statusEl){ statusEl.style.color='var(--red)'; statusEl.textContent='❌ Sin conexión — revisa reglas de Firebase'; }
+    }
+  }).catch(err=>{
+    if(statusEl){ statusEl.style.color='var(--red)'; statusEl.textContent='❌ '+err.message; }
+  });
+}
+
+// ─── Arranque: conectar Firebase directamente ────────────
+function loadFirebaseConfig(){
+  // Pre-rellenar campos de UI
+  const fa=document.getElementById('fbApiKey');    if(fa) fa.value=FB_HARDCODED.apiKey;
+  const fb=document.getElementById('fbDbUrl');     if(fb) fb.value=FB_HARDCODED.databaseURL;
+  const fp=document.getElementById('fbProjectId'); if(fp) fp.value=FB_HARDCODED.projectId;
+  // Conectar con credenciales integradas
+  initFirebase(FB_HARDCODED);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONFIGURACIÓN — Editar nombres, PIN, restaurar
+// ═══════════════════════════════════════════════════════
+
+// Copia editable de los datos (se guarda en localStorage)
+const CFG_KEY = 'ppcl_config_v1';
+let cfg = {};
+
+function loadCfg(){
+  try{ cfg = JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); }catch(e){ cfg={}; }
+  // Aplicar nombres personalizados a los arrays
+  if(cfg.acsSemanal){
+    cfg.acsSemanal.forEach((item,i)=>{
+      if(ACS_SEMANAL[i]) ACS_SEMANAL[i].loc = item.loc;
+    });
+  }
+  if(cfg.evap){
+    cfg.evap.forEach((item,i)=>{
+      if(EVAP_ITEMS[i]) EVAP_ITEMS[i].loc = item.loc;
+    });
+  }
+  if(cfg.potable){
+    cfg.potable.forEach((item,i)=>{
+      if(POTABLE_CALENDARIO[i]) POTABLE_CALENDARIO[i].grifo = item.grifo;
+    });
+  }
+  if(cfg.pin){
+    window._customPIN = cfg.pin;
+  }
+}
+
+function saveCfg(){
+  cfg.acsSemanal = ACS_SEMANAL.map(g=>({n:g.n, ni:g.ni, loc:g.loc}));
+  cfg.evap       = EVAP_ITEMS.map(e=>({n:e.n, loc:e.loc}));
+  cfg.potable    = POTABLE_CALENDARIO.map(p=>({lunes:p.lunes, grifo:p.grifo}));
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+// renderCfgItem no se usa directamente — se construye inline en renderConfig
+function onCfgRestore(evt){
+  saveCfg(); showToast('↩ Nombre restaurado');
+}
+
+function onCfgDelete(type, i){
+  if(!confirm('¿Eliminar este elemento?')) return;
+  if(type==='acsSem'){ ACS_SEMANAL.splice(i,1); }
+  else if(type==='evap'){ EVAP_ITEMS.splice(i,1); }
+  else if(type==='diario'){ DIARIO_ITEMS.splice(i,1); }
+  else if(type==='potable'){ POTABLE_CALENDARIO.splice(i,1); }
+  saveCfg(); renderConfig(); showToast('🗑 Elemento eliminado');
+}
+
+function addAcsSemItem(){
+  const n = String(ACS_SEMANAL.length+1);
+  // Get max ni
+  const maxNi = ACS_SEMANAL.length ? Math.max(...ACS_SEMANAL.map(g=>parseInt(g.ni)||0))+1 : 46099;
+  ACS_SEMANAL.push({n, ni:String(maxNi), loc:'Nuevo grifo '+n});
+  saveCfg(); renderConfig();
+  showToast('➕ Grifo añadido — edita su nombre');
+}
+
+function addEvapItem(){
+  const n = String(EVAP_ITEMS.length+1);
+  EVAP_ITEMS.push({n, loc:'EVAPORATIVO Nº '+n});
+  saveCfg(); renderConfig();
+  showToast('➕ Evaporativo añadido');
+}
+
+function addDiarioItem(){
+  const n = String(DIARIO_ITEMS.length+1);
+  DIARIO_ITEMS.push({n:'D'+n, loc:'Nuevo punto de control '+n});
+  saveCfg(); renderConfig();
+  showToast('➕ Equipo añadido');
+}
+
+function addPotableItem(){
+  // Add next monday after last entry
+  const last = POTABLE_CALENDARIO[POTABLE_CALENDARIO.length-1];
+  let nextLunes = '2026-12-28';
+  if(last){
+    const [y,m,d] = last.lunes.split('-').map(Number);
+    const dt = new Date(y,m-1,d+7);
+    nextLunes = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+  }
+  POTABLE_CALENDARIO.push({lunes:nextLunes, grifo:'Nuevo grifo'});
+  saveCfg(); renderConfig();
+  showToast('➕ Semana añadida');
+}
+
+function makeCfgRow(cells){
+  const tr = document.createElement('tr');
+  cells.forEach(cell=>{
+    const td = document.createElement('td');
+    if(typeof cell === 'string') td.className = 'row-nint', td.textContent = cell;
+    else if(cell.input){
+      const inp = document.createElement('input');
+      inp.type='text'; inp.className='form-input';
+      inp.style.cssText='font-size:12px;padding:6px 10px;width:100%';
+      inp.value = cell.value;
+      inp.onchange = cell.onchange;
+      inp.placeholder = cell.placeholder||'';
+      td.appendChild(inp);
+    } else if(cell.btn){
+      const btn = document.createElement('button');
+      btn.className='btn btn-outline';
+      btn.style.cssText='font-size:11px;padding:4px 10px';
+      btn.textContent = '↩';
+      btn.onclick = cell.onclick;
+      td.appendChild(btn);
+    }
+    tr.appendChild(td);
+  });
+  return tr;
+}
+
+function renderConfig(){
+  function makeDelBtn(type, idx){
+    const btn=document.createElement('button');
+    btn.className='cfg-icon-btn del';btn.textContent='🗑';btn.title='Eliminar';
+    btn.onclick=()=>onCfgDelete(type,idx);
+    return btn;
+  }
+  function makeInp(val,ph,cb){
+    const inp=document.createElement('input');
+    inp.type='text';inp.className='cfg-row-input';
+    inp.value=val||'';inp.placeholder=ph||'';
+    inp.onchange=()=>{cb(inp.value);saveCfg();};
+    return inp;
+  }
+  function makeCfgDiv(children){
+    const d=document.createElement('div');d.className='cfg-row';
+    children.forEach(ch=>{if(ch)d.appendChild(ch);});
+    return d;
+  }
+  function numSpan(txt){
+    const s=document.createElement('span');s.className='cfg-row-num';s.textContent=String(txt);return s;
+  }
+  function actDiv(btns){
+    const d=document.createElement('div');d.className='cfg-row-actions';
+    btns.forEach(b=>d.appendChild(b));return d;
+  }
+
+  // ACS Semanal
+  const acsEl=document.getElementById('cfgAcsSemList');
+  if(acsEl){
+    acsEl.innerHTML='';
+    ACS_SEMANAL.forEach((g,i)=>{
+      const col=document.createElement('div');
+      col.style.cssText='display:flex;flex-direction:column;flex:1;gap:3px;min-width:0';
+      const i1=makeInp(g.ni,'Nº Interno',v=>ACS_SEMANAL[i].ni=v);
+      i1.style.cssText='font-size:11px;font-weight:600;background:var(--surface3);border-radius:4px;padding:3px 6px;border:none;outline:none;color:var(--text)';
+      const i2=makeInp(g.loc,'Nombre grifo',v=>ACS_SEMANAL[i].loc=v);
+      col.appendChild(i1);col.appendChild(i2);
+      acsEl.appendChild(makeCfgDiv([numSpan(g.n),col,actDiv([makeDelBtn('acsSem',i)])]));
+    });
+    const cnt=document.getElementById('cfgAcsSemCount');if(cnt)cnt.textContent=ACS_SEMANAL.length;
+  }
+
+  // Evaporativos
+  const evEl=document.getElementById('cfgEvapList');
+  if(evEl){
+    evEl.innerHTML='';
+    EVAP_ITEMS.forEach((e,i)=>{
+      evEl.appendChild(makeCfgDiv([numSpan(e.n),makeInp(e.loc,'Nombre',v=>EVAP_ITEMS[i].loc=v),actDiv([makeDelBtn('evap',i)])]));
+    });
+    const cnt=document.getElementById('cfgEvapCount');if(cnt)cnt.textContent=EVAP_ITEMS.length;
+  }
+
+  // Diario
+  const dEl=document.getElementById('cfgDiarioList');
+  if(dEl){
+    dEl.innerHTML='';
+    DIARIO_ITEMS.forEach((it,i)=>{
+      dEl.appendChild(makeCfgDiv([numSpan(it.n),makeInp(it.loc,'Nombre equipo',v=>DIARIO_ITEMS[i].loc=v),actDiv([makeDelBtn('diario',i)])]));
+    });
+    const cnt=document.getElementById('cfgDiarioCount');if(cnt)cnt.textContent=DIARIO_ITEMS.length;
+  }
+
+  // Agua Potable
+  const pEl=document.getElementById('cfgPotableList');
+  if(pEl){
+    pEl.innerHTML='';
+    POTABLE_CALENDARIO.forEach((p,i)=>{
+      const lbl=document.createElement('span');lbl.className='cfg-row-num';
+      lbl.style.cssText='font-size:9px;white-space:nowrap;min-width:58px';lbl.textContent=p.lunes;
+      pEl.appendChild(makeCfgDiv([lbl,makeInp(p.grifo,'Nombre grifo',v=>POTABLE_CALENDARIO[i].grifo=v),actDiv([makeDelBtn('potable',i)])]));
+    });
+  }
+
+  // Firebase fields
+  try{
+    const fb=JSON.parse(localStorage.getItem(FB_CFG_KEY)||'{}');
+    const fa=document.getElementById('fbApiKey');if(fa&&fb.apiKey)fa.value=fb.apiKey;
+    const fb2=document.getElementById('fbDbUrl');if(fb2&&fb.dbUrl)fb2.value=fb.dbUrl;
+    const fp=document.getElementById('fbProjectId');if(fp&&fb.projectId)fp.value=fb.projectId;
+  }catch(e){}
+}
+
+function changePIN(){
+  const oldPin = document.getElementById('cfgPinOld').value;
+  const newPin = document.getElementById('cfgPinNew').value;
+  const msg    = document.getElementById('pinChangeMsg');
+  const currentApp = window._customPIN || CORRECT_PIN;
+
+  if(oldPin !== currentApp){
+    msg.style.color='var(--red)';
+    msg.textContent = '❌ PIN de app incorrecto';
+    return;
+  }
+  if(newPin.length!==4||!/^\d+$/.test(newPin)){
+    msg.style.color='var(--red)';
+    msg.textContent = '❌ El PIN debe tener exactamente 4 dígitos';
+    return;
+  }
+  window._customPIN = newPin;
+  cfg.pin = newPin;
+  saveCfg();
+  msg.style.color='var(--green)';
+  msg.textContent = '✅ PIN de app cambiado correctamente';
+  document.getElementById('cfgPinOld').value='';
+  document.getElementById('cfgPinNew').value='';
+  setTimeout(()=>msg.textContent='', 3000);
+}
+
+function changeCfgPIN(){
+  const oldPin = document.getElementById('cfgCfgPinOld')?document.getElementById('cfgCfgPinOld').value:'';
+  const newPin = document.getElementById('cfgCfgPinNew')?document.getElementById('cfgCfgPinNew').value:'';
+  const msg2   = document.getElementById('cfgPinChangeMsg2');
+  const currentCfg = (cfg && cfg.cfgPin) ? cfg.cfgPin : CFG_ACCESS_PIN;
+  if(oldPin!==currentCfg){if(msg2){msg2.style.color='var(--red)';msg2.textContent='❌ PIN actual incorrecto';}return;}
+  if(newPin.length!==4||!/^\d+$/.test(newPin)){if(msg2){msg2.style.color='var(--red)';msg2.textContent='❌ Debe tener 4 dígitos';}return;}
+  cfg.cfgPin=newPin; saveCfg();
+  if(msg2){msg2.style.color='var(--green)';msg2.textContent='✅ PIN de configuración cambiado';}
+  setTimeout(()=>{if(msg2)msg2.textContent='';},3000);
+}
+
+// Override checkPin para usar PIN personalizado si existe
+const _origCheckPin = window.checkPin;
+function checkPin(){
+  const current = window._customPIN || CORRECT_PIN;
+  if(pinBuffer === current){
+    sessionStorage.setItem(SESSION_KEY,'ok');
+    unlockApp();
+  } else {
+    for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
+    document.getElementById('pinError').textContent = '❌ PIN incorrecto';
+    setTimeout(()=>{ pinBuffer=''; updatePinDots(); document.getElementById('pinError').textContent=''; },1200);
+  }
+}
+
+function restoreDefaults(){
+  if(!confirm('¿Restaurar TODOS los nombres originales y BORRAR todos los datos registrados? Esta acción no se puede deshacer.')) return;
+  // Clear data
+  localStorage.removeItem(SK);
+  localStorage.removeItem(CFG_KEY);
+  // Reload page
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PIN / ACCESO
+// ═══════════════════════════════════════════════════════
+const CORRECT_PIN = '2026';   // ← Cambia este PIN
+const SESSION_KEY = 'ppcl_session';
+let pinBuffer = '';
+
+function checkSession(){
+  const s = sessionStorage.getItem(SESSION_KEY);
+  if(s === 'ok') unlockApp(true);
+}
+function pinPress(digit){
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if(pinBuffer.length === 4) setTimeout(checkPin, 150);
+}
+function pinClear(){
+  pinBuffer = pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const dot = document.getElementById('pd'+i);
+    dot.classList.toggle('filled', i < pinBuffer.length);
+    dot.classList.remove('error');
+  }
+}
+function checkPin(){
+  if(pinBuffer === CORRECT_PIN){
+    sessionStorage.setItem(SESSION_KEY,'ok');
+    unlockApp();
+  } else {
+    for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
+    document.getElementById('pinError').textContent = '❌ PIN incorrecto';
+    setTimeout(()=>{ pinBuffer=''; updatePinDots(); document.getElementById('pinError').textContent=''; },1200);
+  }
+}
+function unlockApp(silent){
+  document.getElementById('loginScreen').classList.add('hidden');
+  if(!silent) showToast('✅ Acceso autorizado — Bienvenido');
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+loadData();
+loadCfg();
+
+const today=new Date();
+ppclMonth=today.getMonth();
+ppclYear=today.getFullYear();
+acsDate=today;
+diarioDate=today;
+
+document.getElementById('ppclYear').value=ppclYear;
+document.getElementById('acsDate').value=localDateStr(today);
+document.getElementById('diarioDate').value=localDateStr(today);
+
+evapMonth = today.getMonth();
+evapYear  = today.getFullYear();
+potableDate = new Date();
+
+document.getElementById('evapYear').value  = evapYear;
+document.getElementById('potableDate').value = localDateStr(today);
+
+renderPPCL();
+renderEvap();
+renderACS();
+renderDiario();
+renderPotable();
+updateClock();
+setInterval(updateClock,1000);
+checkSession();
+// Firebase — conectar cuando SDK listo (callback desde loader del head)
+// Si ya estaba en caché del navegador, __fbOnReady habrá sido llamado antes
+// de que este script se ejecute, así que comprobamos también aquí.
+window.__fbOnReady = function(){
+  if(typeof loadFirebaseConfig === 'function') loadFirebaseConfig();
+};
+if(typeof firebase !== 'undefined' && firebase.apps !== undefined){
+  loadFirebaseConfig();
+}
+
+// restore session prompt
+try{
+  const saved=localStorage.getItem(SK);
+  if(saved && Object.keys(JSON.parse(saved)).length>0){
+    showToast('📂 Sesión anterior restaurada');
+  }
+}catch(e){}
+</script>
+
+<!-- ══ DATE PICKER MODAL ══════════════════════════════ -->
+<div class="date-picker-overlay" id="datePickerOverlay" onclick="if(event.target===this)closeDatePicker()">
+  <div class="date-picker-modal">
+    <div class="date-picker-title">📅 Seleccionar fecha de la semana</div>
+    <div class="date-picker-inputs">
+      <div class="date-picker-col">
+        <label>Día</label>
+        <select class="date-picker-select" id="dpDay" onchange="updateDpPreview()">
+          <option>1</option>
+        </select>
+      </div>
+      <div class="date-picker-col">
+        <label>Mes</label>
+        <select class="date-picker-select" id="dpMonth" onchange="updateDpDays();updateDpPreview()">
+          <option>1</option>
+        </select>
+      </div>
+      <div class="date-picker-col">
+        <label>Año</label>
+        <select class="date-picker-select" id="dpYear" onchange="updateDpDays();updateDpPreview()">
+          <option>2026</option>
+        </select>
+      </div>
+    </div>
+    <div class="date-picker-preview" id="dpPreview">—</div>
+    <div class="date-picker-actions">
+      <button class="date-picker-btn cancel" onclick="closeDatePicker()">Cancelar</button>
+      <button class="date-picker-btn confirm" onclick="confirmDatePicker()">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PIN CONFIGURACIÓN ════════════════════════════ -->
+<div class="overlay" id="configPinOverlay" style="z-index:250">
+  <div class="modal" style="max-width:320px;text-align:center">
+    <div style="font-size:32px;margin-bottom:8px">⚙️🔐</div>
+    <div class="modal-title" style="justify-content:center;font-size:16px">Acceso a Configuración</div>
+    <div style="font-family:monospace;font-size:11px;color:var(--text3);margin-bottom:16px">Introduce el PIN de configuración</div>
+    <div class="pin-dots" id="cfgPinDots" style="justify-content:center;margin-bottom:14px">
+      <div class="pin-dot" id="cpd0"></div>
+      <div class="pin-dot" id="cpd1"></div>
+      <div class="pin-dot" id="cpd2"></div>
+      <div class="pin-dot" id="cpd3"></div>
+    </div>
+    <div class="pin-grid" style="max-width:220px;margin:0 auto 10px">
+      <button class="pin-btn" onclick="cfgPinPress('1')">1</button>
+      <button class="pin-btn" onclick="cfgPinPress('2')">2</button>
+      <button class="pin-btn" onclick="cfgPinPress('3')">3</button>
+      <button class="pin-btn" onclick="cfgPinPress('4')">4</button>
+      <button class="pin-btn" onclick="cfgPinPress('5')">5</button>
+      <button class="pin-btn" onclick="cfgPinPress('6')">6</button>
+      <button class="pin-btn" onclick="cfgPinPress('7')">7</button>
+      <button class="pin-btn" onclick="cfgPinPress('8')">8</button>
+      <button class="pin-btn" onclick="cfgPinPress('9')">9</button>
+      <button class="pin-btn" onclick="cfgPinPress('0')">0</button>
+      <button class="pin-btn" onclick="cfgPinClear()">⌫</button>
+    </div>
+    <div class="pin-error" id="cfgPinError"></div>
+    <button class="btn btn-outline" style="margin-top:10px;width:100%" onclick="cfgPinBuffer='';for(let i=0;i<4;i++){const d=document.getElementById('cpd'+i);if(d)d.classList.remove('filled','error');}document.getElementById('cfgPinError').textContent='';closeOverlay('configPinOverlay')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ══ EMAIL MODAL ══════════════════════════════════════ -->
+<div class="email-modal-overlay" id="emailModal">
+  <div class="email-modal">
+    <div class="email-modal-header">
+      <span class="email-modal-header-icon">✉️</span>
+      <div class="email-modal-header-text">
+        <div class="email-modal-header-title">Enviar Reporte por Correo</div>
+        <div class="email-modal-header-sub">juanantonio.carmona@diagroup.com</div>
+      </div>
+      <button class="email-modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+    <div class="email-modal-body">
+
+      <div class="email-info-box">
+        ⚠️ Los navegadores <strong>no permiten adjuntar archivos por seguridad</strong>.
+        Sigue los 3 pasos para enviar el Excel correctamente.
+      </div>
+
+      <div class="email-steps">
+        <div class="email-step active" id="estep1">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">📊 Descargar el Excel</div>
+            <div class="step-desc">Pulsa el botón para generar y descargar el archivo completo con los 5 hojas de datos.</div>
+            <div class="email-filename" id="excelFilename">PPCL_Legionella_MES_AÑO_fecha.xlsx</div>
+            <button class="email-btn excel" style="margin-top:10px;flex:none;padding:9px 16px;font-size:12px" onclick="downloadExcelStep()">
+              📥 Descargar Excel ahora
+            </button>
+          </div>
+        </div>
+
+        <div class="email-step" id="estep2">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">📧 Abrir el correo</div>
+            <div class="step-desc">Se abrirá tu aplicación de correo con el destinatario, asunto y resumen ya escritos.</div>
+            <span class="step-badge">juanantonio.carmona@diagroup.com</span>
+            <button class="email-btn primary" style="margin-top:10px;flex:none;padding:9px 16px;font-size:12px" onclick="openMailStep()">
+              ✉️ Abrir correo
+            </button>
+          </div>
+        </div>
+
+        <div class="email-step" id="estep3">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">📎 Adjuntar el Excel al correo</div>
+            <div class="step-desc">En tu app de correo, pulsa el icono del <strong>clip 📎</strong> y selecciona el archivo Excel descargado en el paso 1 desde tu carpeta <strong>Descargas</strong>.</div>
+            <div style="margin-top:8px;font-size:11px;color:var(--text3)">
+              📱 <strong>Android/iOS:</strong> Clip → Archivos → Descargas<br>
+              💻 <strong>PC:</strong> Adjuntar → Descargas → selecciona el .xlsx
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="email-progress"><div class="email-progress-bar" id="emailProgressBar"></div></div>
+
+      <div class="email-modal-actions" style="margin-top:16px">
+        <button class="email-btn secondary" onclick="closeEmailModal()">Cerrar</button>
+        <button class="email-btn primary" onclick="downloadExcelStep();openMailStep()">
+          ⚡ Hacer pasos 1 y 2 a la vez
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
